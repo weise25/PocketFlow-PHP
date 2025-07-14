@@ -1,0 +1,28 @@
+{
+    "name": "weise25/pocketflow-php",
+    "version": "0.1",
+    "description": "A PHP port of the minimalist LLM framework PocketFlow.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "PocketFlow\\": "src/"
+        },
+        "files": [
+            "src/PocketFlow.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PocketFlow\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.3",
+        "react/async": "^4.0",
+        "react/promise-timer": "^1.9"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.1"
+    }
+}
