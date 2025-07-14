@@ -138,7 +138,6 @@ class Flow extends BaseNode
         $actionKey = $action ?? 'default';
         $successors = $current->getSuccessors();
 
-        // Only trigger a warning if the action key is truly not defined.
         if (!array_key_exists($actionKey, $successors)) {
             if (!empty($successors)) {
                 $availableActions = implode("', '", array_keys($successors));
@@ -147,7 +146,6 @@ class Flow extends BaseNode
             return null;
         }
         
-        // The action exists. Return the successor (which can be null).
         return $successors[$actionKey];
     }
 
@@ -160,12 +158,11 @@ class Flow extends BaseNode
         while ($current) {
             $current->setParams($p);
             $reflection = new \ReflectionClass($current);
-            if ($reflection->isSubclassOf(AsyncNode::class)) {
+            if ($reflection->isSubclassOf(AsyncNode::class) || $reflection->isSubclassOf(AsyncFlow::class)) {
                  $lastAction = await($current->_run_async($shared));
             } else {
                  $lastAction = $current->_run($shared);
             }
-            // Cloning is no longer necessary here and could cause issues.
             $current = $this->getNextNode($current, $lastAction);
         }
         return $lastAction;
@@ -290,15 +287,6 @@ class AsyncParallelBatchNode extends AsyncNode
 
 class AsyncFlow extends Flow
 {
-    use AsyncLogicTrait;
-
-    public function __construct(?BaseNode $startNode = null, int $maxRetries = 1, int $wait = 0)
-    {
-        parent::__construct($startNode);
-        $this->maxRetries = $maxRetries;
-        $this->wait = $wait;
-    }
-
     protected function _orchestrate_async(stdClass $shared, ?array $params = null): PromiseInterface
     {
         return async(function () use ($shared, $params) {
@@ -308,7 +296,7 @@ class AsyncFlow extends Flow
 
             while ($current) {
                 $current->setParams($p);
-                if ($current instanceof AsyncNode || $current instanceof AsyncFlow) {
+                if ($current instanceof self || $current instanceof AsyncNode) {
                     $lastAction = await($current->_run_async($shared));
                 } else {
                     $lastAction = $current->_run($shared);
@@ -319,24 +307,36 @@ class AsyncFlow extends Flow
         })();
     }
 
-    public function _run_async(stdClass $shared): PromiseInterface
+    // Refactor: Re-introduced _run_async for internal orchestration of nested flows.
+    protected function _run_async(stdClass $shared): PromiseInterface
     {
-        return async(function () use ($shared) {
-            $prepResult = await($this->prep_async($shared));
-            $orchestrationResult = await($this->_orchestrate_async($shared));
-            return await($this->post_async($shared, $prepResult, $orchestrationResult));
-        })();
+        // The "run" logic for a flow is simply to orchestrate it.
+        return $this->_orchestrate_async($shared, $this->params);
     }
 
-    public function post_async(stdClass $shared, mixed $prepResult, mixed $execResult): PromiseInterface
+    public function run_async(stdClass $shared): PromiseInterface
     {
-        return async(fn() => $execResult)();
+        // The public entry point calls the internal run logic.
+        return $this->_run_async($shared);
+    }
+
+    public function run(stdClass $shared): ?string
+    {
+        throw new \RuntimeException("Cannot call sync 'run' on an AsyncFlow. Use 'run_async' instead.");
+    }
+
+    protected function _run(stdClass $shared): ?string
+    {
+        throw new \RuntimeException("Internal error: _run should not be called on AsyncFlow.");
     }
 }
 
 class AsyncBatchFlow extends AsyncFlow
 {
-    public function _run_async(stdClass $shared): PromiseInterface
+    public function prep_async(stdClass $shared): PromiseInterface { return async(fn() => null)(); }
+    public function post_async(stdClass $shared, mixed $prepResult, mixed $execResult): PromiseInterface { return async(fn() => $execResult)(); }
+
+    public function run_async(stdClass $shared): PromiseInterface
     {
         return async(function () use ($shared) {
             $paramList = await($this->prep_async($shared)) ?? [];
@@ -350,7 +350,10 @@ class AsyncBatchFlow extends AsyncFlow
 
 class AsyncParallelBatchFlow extends AsyncFlow
 {
-    public function _run_async(stdClass $shared): PromiseInterface
+    public function prep_async(stdClass $shared): PromiseInterface { return async(fn() => null)(); }
+    public function post_async(stdClass $shared, mixed $prepResult, mixed $execResult): PromiseInterface { return async(fn() => $execResult)(); }
+
+    public function run_async(stdClass $shared): PromiseInterface
     {
         return async(function () use ($shared) {
             $paramList = await($this->prep_async($shared)) ?? [];
