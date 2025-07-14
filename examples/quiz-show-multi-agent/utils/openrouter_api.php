@@ -5,12 +5,12 @@ use React\Promise\PromiseInterface;
 use function React\Async\async;
 
 /**
- * Ruft die OpenRouter API asynchron auf.
+ * Calls the OpenRouter API asynchronously.
  *
- * @param string $model Das zu verwendende Modell.
- * @param array $messages Die Nachrichten-Historie.
- * @param ?callable $streamCallback Ein optionaler Callback, der für jeden Stream-Chunk aufgerufen wird.
- * @return PromiseInterface Ein Promise, das zur vollständigen Antwort des LLM auflöst.
+ * @param string $model The model to use.
+ * @param array $messages The message history.
+ * @param ?callable $streamCallback An optional callback that is called for each stream chunk.
+ * @return PromiseInterface A promise that resolves to the full response of the LLM.
  */
 function call_openrouter_async(string $model, array $messages, ?callable $streamCallback = null): PromiseInterface
 {
@@ -22,12 +22,12 @@ function call_openrouter_async(string $model, array $messages, ?callable $stream
             $client = OpenAI::factory()
                 ->withApiKey($apiKey)
                 ->withBaseUri('https://openrouter.ai/api/v1')
-                ->withHttpHeader('HTTP-Referer', 'http://localhost') // Erforderlich für OpenRouter
-                ->withHttpHeader('X-Title', 'PocketFlow-PHP Quiz Show') // Empfohlen für OpenRouter
+                ->withHttpHeader('HTTP-Referer', 'http://localhost') // Required for OpenRouter
+                ->withHttpHeader('X-Title', 'PocketFlow-PHP Quiz Show') // Recommended for OpenRouter
                 ->make();
 
             $fullResponse = '';
-            // Wenn ein Callback übergeben wird, aktivieren wir Streaming.
+            // If a callback is provided, we enable streaming.
             if (is_callable($streamCallback)) {
                 $stream = $client->chat()->createStreamed([
                     'model' => $model,
@@ -38,7 +38,7 @@ function call_openrouter_async(string $model, array $messages, ?callable $stream
                     $chunk = $response->choices[0]->delta->content;
                     if ($chunk !== null) {
                         $fullResponse .= $chunk;
-                        // Rufe den Callback mit dem neuen Chunk auf.
+                        // Call the callback with the new chunk.
                         $streamCallback($chunk);
                     }
                 }
