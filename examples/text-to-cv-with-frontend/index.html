@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Crafter AI</title>
+    <style>
+/* ===== THEME VARIABLES ===== */
+:root {
+    /* Dark Theme (Default) */
+    --bg-primary: #000000;
+    --bg-secondary: #111111;
+    --bg-tertiary: #1a1a1a;
+    --bg-card: #0f0f0f;
+    --bg-surface: #1e1e1e;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #808080;
+    --text-muted: #606060;
+    
+    --accent-primary: #ffffff;
+    --accent-secondary: #f0f0f0;
+    --accent-hover: #e0e0e0;
+    
+    --border-primary: #333333;
+    --border-secondary: #2a2a2a;
+    --border-accent: #404040;
+    
+    --shadow-light: rgba(255, 255, 255, 0.1);
+    --shadow-medium: rgba(255, 255, 255, 0.15);
+    --shadow-heavy: rgba(255, 255, 255, 0.2);
+    
+    --success: #00ff88;
+    --warning: #ffaa00;
+    --error: #ff4444;
+    --info: #44aaff;
+}
+
+/* Light Theme */
+.light-theme {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f0f1f2;
+    --bg-card: #ffffff;
+    --bg-surface: #fafbfc;
+    
+    --text-primary: #000000;
+    --text-secondary: #4a4a4a;
+    --text-tertiary: #6a6a6a;
+    --text-muted: #8a8a8a;
+    
+    --accent-primary: #000000;
+    --accent-secondary: #1a1a1a;
+    --accent-hover: #333333;
+    
+    --border-primary: #e0e0e0;
+    --border-secondary: #f0f0f0;
+    --border-accent: #d0d0d0;
+    
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --shadow-heavy: rgba(0, 0, 0, 0.2);
+    
+    --success: #00aa44;
+    --warning: #cc8800;
+    --error: #cc2222;
+    --info: #2288cc;
+}
+
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== BACKGROUND ELEMENTS ===== */
+.bg-grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.03;
+    background-image: 
+        linear-gradient(var(--border-primary) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-primary) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -2;
+}
+
+.bg-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 20%, var(--shadow-light) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--shadow-light) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 50px;
+    height: 50px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px var(--shadow-medium);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-primary);
+    box-shadow: 0 6px 30px var(--shadow-heavy);
+}
+
+.toggle-icon {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== MAIN LAYOUT ===== */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== HEADER ===== */
+.main-header {
+    flex-shrink: 0;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-card);
+}
+
+.header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 2rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.title-section h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.title-section p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* ===== CARDS ===== */
+.card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    margin: 1rem;
+    border-radius: 16px;
+    display: none;
+    overflow: hidden;
+    position: relative;
+}
+
+.card.active {
+    display: flex;
+    flex-direction: column;
+    animation: slideInUp 0.4s ease-out;
+}
+
+.card.error-card {
+    border-color: var(--error);
+}
+
+/* ===== CARD HEADERS ===== */
+.card-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-secondary);
+    background: var(--bg-surface);
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.step-indicator.error .step-number {
+    background: var(--error);
+    color: white;
+}
+
+.step-info h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.step-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ===== STREAMING INDICATOR ===== */
+.streaming-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    background: var(--bg-surface);
+    border-radius: 20px;
+    border: 1px solid var(--border-accent);
+}
+
+.streaming-indicator.streaming {
+    display: flex;
+    animation: pulse 2s infinite;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+}
+
+.streaming-indicator span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ===== CARD CONTENT ===== */
+.card-content {
+    flex: 1;
+    padding: 2rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ===== INPUT SECTIONS ===== */
+.input-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.textarea-container {
+    flex: 1;
+    position: relative;
+}
+
+textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    padding: 1.2rem;
+    background: var(--bg-surface);
+    border: 2px solid var(--border-primary);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: none;
+    transition: all 0.3s ease;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.8rem;
+    padding: 0 0.5rem;
+}
+
+.char-count {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.tip {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ===== BUTTONS ===== */
+.button-primary, .button-secondary, .button-tertiary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.button-primary {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    box-shadow: 0 4px 20px var(--shadow-medium);
+}
+
+.button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--shadow-heavy);
+}
+
+.button-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.button-secondary {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-primary);
+}
+
+.button-secondary:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-tertiary);
+}
+
+.button-tertiary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-secondary);
+}
+
+.button-tertiary:hover {
+    color: var(--text-primary);
+    border-color: var(--border-accent);
+}
+
+.button-icon {
+    font-size: 1rem;
+}
+
+.button-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.button-primary:hover .button-arrow {
+    transform: translateX(3px);
+}
+
+/* ===== QUICK EXAMPLES ===== */
+.quick-examples {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.examples-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin-bottom: 0.8rem;
+}
+
+.example-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+}
+
+.example-tag {
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-secondary);
+    border-radius: 16px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.example-tag:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+/* ===== PLAN CONTAINER ===== */
+.plan-container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.plan-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+.plan-box-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border-secondary);
+    background: var(--bg-tertiary);
+    border-radius: 12px 12px 0 0;
+}
+
+.plan-box-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.plan-status {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    padding: 0.2rem 0.6rem;
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--border-secondary);
+}
+
+.plan-content {
+    flex: 1;
+    overflow-y: auto;
+    line-height: 1.6;
+    font-size: 0.85rem;
+    padding: 1.2rem;
+    min-height: 0;
+}
+
+/* Custom scrollbar for plan content */
+.plan-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.plan-content::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+.plan-content::-webkit-scrollbar-thumb {
+    background: var(--border-accent);
+    border-radius: 3px;
+}
+
+.plan-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+/* ===== AGENT PLAN SECTIONS ===== */
+.agent-plan-section {
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.agent-plan-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.agent-plan-section p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.agent-plan-section blockquote {
+    font-style: italic;
+    color: var(--text-secondary);
+    margin: 0;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--border-accent);
+    font-size: 0.8rem;
+}
+
+/* ===== PROGRESS STEPS ===== */
+.progress-container {
+    flex: 1;
+    overflow-y: auto;
+    margin: 1rem 0;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active {
+    border-color: var(--accent-primary);
+    background: var(--bg-tertiary);
+    box-shadow: 0 4px 20px var(--shadow-light);
+    animation: pulse 2s infinite;
+}
+
+.progress-step.completed {
+    border-color: var(--success);
+    background: linear-gradient(135deg, var(--bg-surface), rgba(0, 255, 136, 0.05));
+}
+
+.step-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h4 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.step-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.step-status {
+    font-size: 1.2rem;
+    margin-left: 0.8rem;
+}
+
+/* ===== THOUGHTS CONTAINER ===== */
+.thoughts-container {
+    flex-shrink: 0;
+    margin: 1rem 0;
+    padding: 1.2rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+}
+
+.thoughts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.thoughts-header h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.thoughts-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+}
+
+.thought-text {
+    height: 120px;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    font-family: 'Inter', monospace;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    font-size: 0.8rem;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar-container {
+    flex-shrink: 0;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.progress-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.progress-percentage {
+    font-weight: 700;
+    color: var(--accent-primary);
+    font-size: 0.9rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 0.8rem;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--text-secondary));
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.8s ease;
+}
+
+.progress-bar.progress-33::after { width: 33%; }
+.progress-bar.progress-66::after { width: 66%; }
+.progress-bar.progress-100::after { width: 100%; }
+
+.progress-text {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* ===== GENERATION STATUS ===== */
+.generation-status {
+    display: none;
+    padding: 0.8rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.generation-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* ===== RESULT SECTION ===== */
+.success-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--success);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.result-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.success-animation {
+    margin: 1rem 0;
+}
+
+.checkmark {
+    width: 60px;
+    height: 60px;
+    background: var(--success);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto;
+    animation: checkmark-pop 0.6s ease-out;
+}
+
+.result-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+    font-weight: 700;
+}
+
+.result-info p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+}
+
+.secondary-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1.5rem 0;
+}
+
+/* ===== ERROR SECTION ===== */
+.error-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.error-illustration {
+    margin: 1rem 0;
+}
+
+.error-icon {
+    font-size: 3rem;
+    opacity: 0.7;
+}
+
+.error-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+    color: var(--error);
+}
+
+.error-details {
+    margin: 1.5rem 0;
+    text-align: left;
+    width: 100%;
+    max-width: 500px;
+}
+
+.error-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem;
+    background: var(--bg-surface);
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 0.8rem;
+    font-size: 0.8rem;
+}
+
+.error-toggle:hover {
+    background: var(--bg-tertiary);
+}
+
+#error-message {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 6px;
+    padding: 0.8rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    max-height: 150px;
+}
+
+.help-section {
+    margin-top: 1.5rem;
+    text-align: left;
+    width: 100%;
+    max-width: 400px;
+}
+
+.help-list {
+    list-style: none;
+    padding: 0;
+}
+
+.help-list li {
+    padding: 0.3rem 0;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+}
+
+.help-list li::before {
+    content: '*';
+    position: absolute;
+    left: 0;
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+
+/* ===== EDIT SECTION ===== */
+.edit-section {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    animation: slideInUp 0.3s ease-out;
+}
+
+.edit-header {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.edit-header h4 {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+}
+
+.edit-header p {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* ===== BUTTON GROUPS ===== */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1.5rem 0;
+}
+
+.action-section {
+    flex-shrink: 0;
+    margin: 1.5rem 0;
+}
+
+/* ===== REVIEW SECTION SPECIFIC ===== */
+#review-section .card-content {
+    padding: 1.5rem 2rem 2rem 2rem;
+}
+
+#review-section .action-section {
+    margin: 1.5rem 0 0 0;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes checkmark-pop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 1rem;
+    }
+    
+    .title-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .title-section p {
+        font-size: 0.8rem;
+    }
+    
+    .card {
+        margin: 0.5rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .plan-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .secondary-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .theme-toggle {
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .toggle-icon {
+        font-size: 1rem;
+    }
+    
+    .button-primary, .button-secondary, .button-tertiary {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .step-number {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    .step-info h2 {
+        font-size: 1.2rem;
+    }
+    
+    .step-info p {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-header {
+        padding: 0.8rem;
+    }
+    
+    .logo {
+        font-size: 1.5rem;
+    }
+    
+    .title-section h1 {
+        font-size: 1.3rem;
+    }
+    
+    .card-header {
+        padding: 0.8rem;
+    }
+    
+    .card-content {
+        padding: 1rem;
+    }
+    
+    .progress-step {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.8rem;
+    }
+    
+    .step-icon {
+        margin: 0;
+    }
+    
+    .thought-text {
+        height: 100px;
+        font-size: 0.75rem;
+    }
+}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+<body class="dark-theme">
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" id="theme-toggle">
+        <div class="toggle-icon"><i data-lucide="moon"></i></div>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="bg-grid"></div>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo"><i data-lucide="sparkles"></i></div>
+                    <div class="title-section">
+                        <h1>CV Crafter AI</h1>
+                        <p>Professional resume generator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Initial Prompt Section -->
+        <div id="prompt-section" class="card active">
+            <div class="card-header">
+                <div class="step-indicator">
+                    <span class="step-number">01</span>
+                    <div class="step-info">
+                        <h2>Describe Your Vision</h2>
+                        <p>Tell our AI exactly what kind of CV you want to create</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="prompt-input">Your CV Requirements</label>
+                        <div class="textarea-container">
+                            <textarea id="prompt-input" placeholder="e.g., A modern, single-page CV for a senior software engineer with 10+ years of experience, focusing on backend development with Go and Python. Use a clean, professional design with subtle accent colors."></textarea>
+                            <div class="input-footer">
+                                <span class="char-count" id="char-count">0 characters</span>
+                                <div class="input-tips">
+                                    <span class="tip"><i data-lucide="lightbulb"></i> Be specific about role, experience, and design preferences</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-section">
+                        <button id="start-button" class="button-primary">
+                            <span class="button-icon"><i data-lucide="rocket"></i></span>
+                            <span class="button-text">Generate My CV Plan</span>
+                            <span class="button-arrow"><i data-lucide="arrow-right"></i></span>
+                        </button>
+                        
+                        <div class="quick-examples">
+                            <span class="examples-label">Quick examples:</span>
+                            <div class="example-tags">
+                                <span class="example-tag" data-example="Software Engineer CV with 5+ years experience in React and Node.js">Tech Professional</span>
+                                <span class="example-tag" data-example="Marketing Manager CV with focus on digital campaigns and team leadership">Marketing Expert</span>
+                                <span class="example-tag" data-example="Creative Designer CV showcasing portfolio work and artistic skills">Creative Designer</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Review Section -->
+        <div id="review-section" class="card">
+            <div class="card-header">
+                <div class="step-indicator">
+                    <span class="step-number">02</span>
+                    <div class="step-info">
+                        <h2>Review & Refine</h2>
+                        <p>AI is crafting your personalized CV plan</p>
+                    </div>
+                </div>
+                <div class="streaming-indicator" id="streaming-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>AI is thinking...</span>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="plan-container">
+                <div id="agent-plan-container" class="plan-box">
+                    <div class="plan-box-header">
+                        <h3><i data-lucide="brain"></i> AI Strategy</h3>
+                        <div class="plan-status" id="agent-status">Analyzing...</div>
+                    </div>
+                    <div id="agent-plan-display" class="plan-content"></div>
+                </div>
+                
+                <div id="cv-plan-container" class="plan-box">
+                    <div class="plan-box-header">
+                        <h3><i data-lucide="file-text"></i> CV Structure</h3>
+                        <div class="plan-status" id="cv-status">Building...</div>
+                    </div>
+                    <div id="cv-generation-status" class="generation-status"></div>
+                    <div id="cv-plan-display" class="plan-content"></div>
+                </div>
+            </div>
+            
+            <pre id="raw-plan-display" style="display:none;"></pre> <!-- Hidden raw data -->
+            
+            <div class="action-section">
+                <div class="button-group">
+                    <button id="approve-button" class="button-primary" disabled>
+                        <span class="button-icon"><i data-lucide="check"></i></span>
+                        <span class="button-text">Perfect! Generate PDF</span>
+                    </button>
+                    <button id="edit-button" class="button-secondary" disabled>
+                        <span class="button-icon"><i data-lucide="edit"></i></span>
+                        <span class="button-text">Make Changes</span>
+                    </button>
+                </div>
+                
+                <div id="edit-subsection" class="edit-section">
+                    <div class="edit-header">
+                        <h4><i data-lucide="sparkles"></i> Customize Your CV</h4>
+                        <p>Tell the AI what you'd like to change or improve</p>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="edit-prompt" placeholder="e.g., Change the name to Jane Doe, add a section for volunteer experience, or make the design more colorful"></textarea>
+                        <button id="submit-edit-button" class="button-primary">
+                            <span class="button-icon"><i data-lucide="refresh-cw"></i></span>
+                            <span class="button-text">Apply Changes</span>
+                        </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Generation Section -->
+        <div id="generating-section" class="card">
+            <div class="card-header">
+                <div class="step-indicator">
+                    <span class="step-number">03</span>
+                    <div class="step-info">
+                        <h2>Crafting Your CV</h2>
+                        <p>AI is designing and generating your professional document</p>
+                    </div>
+                </div>
+                <div class="generation-timer">
+                    <span class="timer-icon"><i data-lucide="timer"></i></span>
+                    <span id="generation-timer">00:00</span>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <!-- Progress Steps -->
+                <div class="progress-container">
+                <div class="progress-step" id="step-html">
+                    <div class="step-icon"><i data-lucide="palette"></i></div>
+                    <div class="step-content">
+                        <h4>Designing Layout</h4>
+                        <p>Creating a beautiful, professional design tailored to your requirements</p>
+                    </div>
+                    <div class="step-status" id="status-html"><i data-lucide="clock"></i></div>
+                </div>
+                
+                <div class="progress-step" id="step-pdf">
+                    <div class="step-icon"><i data-lucide="file-text"></i></div>
+                    <div class="step-content">
+                        <h4>Converting to PDF</h4>
+                        <p>Generating your final document with perfect formatting</p>
+                    </div>
+                    <div class="step-status" id="status-pdf"><i data-lucide="clock"></i></div>
+                </div>
+                
+                <div class="progress-step" id="step-complete">
+                    <div class="step-icon"><i data-lucide="sparkles"></i></div>
+                    <div class="step-content">
+                        <h4>Final Touches</h4>
+                        <p>Optimizing and preparing your CV for download</p>
+                    </div>
+                    <div class="step-status" id="status-complete"><i data-lucide="clock"></i></div>
+                </div>
+            </div>
+            
+            <!-- Live Thoughts Display -->
+            <div class="thoughts-container">
+                <div class="thoughts-header">
+                    <h4><i data-lucide="cpu"></i> AI Process Monitor</h4>
+                    <div class="thoughts-status">
+                        <div class="status-dot"></div>
+                        <span>Processing...</span>
+                    </div>
+                </div>
+                <div id="thought-display" class="thought-text"></div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-info">
+                    <span class="progress-label">Overall Progress</span>
+                    <span class="progress-percentage" id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar" id="generation-progress-bar"></div>
+                <div class="progress-text" id="generation-progress-text">Initializing...</div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result-section" class="card">
+            <div class="card-header">
+                <div class="step-indicator">
+                    <span class="step-number">04</span>
+                    <div class="step-info">
+                        <h2>Success! CV Ready</h2>
+                        <p>Your professional CV has been generated and is ready for download</p>
+                    </div>
+                </div>
+                <div class="success-badge">
+                    <span class="success-icon"><i data-lucide="party-popper"></i></span>
+                    <span>Complete</span>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="result-content">
+                <div class="success-animation">
+                    <div class="checkmark"><i data-lucide="check"></i></div>
+                </div>
+                
+                <div class="result-info">
+                    <h3>Your CV is Ready!</h3>
+                    <p>We've crafted a professional CV tailored to your specifications. Your document is optimized for both digital viewing and printing.</p>
+                    
+                </div>
+                
+                <div class="action-section">
+                    <a id="pdf-link" href="#" target="_blank" class="button-primary download-btn">
+                        <span class="button-icon"><i data-lucide="download"></i></span>
+                        <span class="button-text">Download Your CV</span>
+                        <span class="button-arrow"><i data-lucide="arrow-down"></i></span>
+                    </a>
+                    
+                    <div class="secondary-actions">
+                        <button id="restart-button" class="button-secondary" onclick="location.reload();">
+                            <span class="button-icon"><i data-lucide="refresh-cw"></i></span>
+                            <span class="button-text">Create Another CV</span>
+                        </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="error-section" class="card error-card">
+            <div class="card-header">
+                <div class="step-indicator error">
+                    <span class="step-number"><i data-lucide="alert-triangle"></i></span>
+                    <div class="step-info">
+                        <h2>Oops! Something Went Wrong</h2>
+                        <p>Don't worry, we can fix this together</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="error-content">
+                <div class="error-illustration">
+                    <div class="error-icon"><i data-lucide="wrench"></i></div>
+                </div>
+                
+                <div class="error-info">
+                    <h3>Technical Hiccup Detected</h3>
+                    <p>Our AI encountered an unexpected issue while processing your request. This is usually temporary and can be resolved quickly.</p>
+                    
+                    <div class="error-details">
+                        <div class="error-toggle" onclick="document.getElementById('error-message').style.display = document.getElementById('error-message').style.display === 'none' ? 'block' : 'none'">
+                            <span><i data-lucide="search"></i> View Technical Details</span>
+                            <span class="toggle-arrow"><i data-lucide="chevron-down"></i></span>
+                        </div>
+                        <pre id="error-message" style="display: none;"></pre>
+                    </div>
+                </div>
+                
+                <div class="action-section">
+                    <button id="error-restart-button" class="button-primary" onclick="location.reload();">
+                        <span class="button-icon"><i data-lucide="refresh-cw"></i></span>
+                        <span class="button-text">Try Again</span>
+                    </button>
+                    
+                    <div class="help-section">
+                        <h4><i data-lucide="lightbulb"></i> Quick Fixes</h4>
+                        <ul class="help-list">
+                            <li>Check your internet connection</li>
+                            <li>Try refreshing the page</li>
+                            <li>Simplify your CV requirements</li>
+                        </ul>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const toggleIcon = themeToggle.querySelector('.toggle-icon');
+    const body = document.body;
+    
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        toggleIcon.innerHTML = '<i data-lucide="sun"></i>';
+        lucide.createIcons();
+    } else {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        toggleIcon.innerHTML = '<i data-lucide="moon"></i>';
+        lucide.createIcons();
+    }
+    
+    themeToggle.addEventListener('click', () => {
+        if (body.classList.contains('dark-theme')) {
+            body.classList.remove('dark-theme');
+            body.classList.add('light-theme');
+            toggleIcon.innerHTML = '<i data-lucide="sun"></i>';
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.classList.remove('light-theme');
+            body.classList.add('dark-theme');
+            toggleIcon.innerHTML = '<i data-lucide="moon"></i>';
+            localStorage.setItem('theme', 'dark');
+        }
+        lucide.createIcons();
+    });
+
+    const ui = {
+        promptSection: document.getElementById('prompt-section'),
+        reviewSection: document.getElementById('review-section'),
+        generatingSection: document.getElementById('generating-section'),
+        resultSection: document.getElementById('result-section'),
+        errorSection: document.getElementById('error-section'),
+        editSubsection: document.getElementById('edit-subsection'),
+        
+        promptInput: document.getElementById('prompt-input'),
+        editPrompt: document.getElementById('edit-prompt'),
+        rawPlanDisplay: document.getElementById('raw-plan-display'),
+        agentPlanDisplay: document.getElementById('agent-plan-display'),
+        cvPlanDisplay: document.getElementById('cv-plan-display'),
+        cvGenerationStatus: document.getElementById('cv-generation-status'),
+        thoughtDisplay: document.getElementById('thought-display'),
+        pdfLink: document.getElementById('pdf-link'),
+        errorMessage: document.getElementById('error-message'),
+        streamingIndicator: document.getElementById('streaming-indicator'),
+        charCount: document.getElementById('char-count'),
+        progressPercentage: document.getElementById('progress-percentage'),
+        generationTimer: document.getElementById('generation-timer'),
+
+        startButton: document.getElementById('start-button'),
+        approveButton: document.getElementById('approve-button'),
+        editButton: document.getElementById('edit-button'),
+        submitEditButton: document.getElementById('submit-edit-button'),
+        restartButton: document.getElementById('restart-button'),
+        errorRestartButton: document.getElementById('error-restart-button'),
+    };
+
+    let eventSource;
+    let initialUserPrompt = '';
+    let currentProgressStep = 0;
+    let startTime = null;
+
+    // Character counter for textarea
+    if (ui.promptInput && ui.charCount) {
+        ui.promptInput.addEventListener('input', () => {
+            const count = ui.promptInput.value.length;
+            ui.charCount.textContent = `${count} characters`;
+        });
+    }
+
+    // Example tag functionality
+    document.querySelectorAll('.example-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            const example = tag.getAttribute('data-example');
+            if (ui.promptInput && example) {
+                ui.promptInput.value = example;
+                ui.promptInput.focus();
+                // Update character count
+                if (ui.charCount) {
+                    ui.charCount.textContent = `${example.length} characters`;
+                }
+            }
+        });
+    });
+
+    // Timer functionality
+    function startTimer() {
+        startTime = Date.now();
+        const timerInterval = setInterval(() => {
+            if (!startTime) {
+                clearInterval(timerInterval);
+                return;
+            }
+            const elapsed = Date.now() - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            if (ui.generationTimer) {
+                ui.generationTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+        return timerInterval;
+    }
+
+    function showSection(sectionName) {
+        [ui.promptSection, ui.reviewSection, ui.generatingSection, ui.resultSection, ui.errorSection].forEach(section => {
+            if (section) section.classList.remove('active');
+        });
+        const sectionToShow = document.getElementById(`${sectionName}-section`);
+        if (sectionToShow) {
+            sectionToShow.classList.add('active');
+        }
+    }
+
+    function setReviewButtons(enabled) {
+        if (ui.approveButton) ui.approveButton.disabled = !enabled;
+        if (ui.editButton) ui.editButton.disabled = !enabled;
+    }
+
+    function renderFinalPlan(fullPlan) {
+        renderAgentPlan(fullPlan.agent_plan, ui.agentPlanDisplay);
+        renderYamlAsHtml(fullPlan.cv, ui.cvPlanDisplay);
+        
+        // Update status indicators
+        const agentStatus = document.getElementById('agent-status');
+        const cvStatus = document.getElementById('cv-status');
+        if (agentStatus) agentStatus.textContent = 'Complete';
+        if (cvStatus) cvStatus.textContent = 'Ready';
+    }
+
+    function renderAgentPlan(plan, container) {
+        if (!container) return;
+        container.innerHTML = '';
+        if (!plan) return;
+
+        const createSection = (icon, title, content) => {
+            const section = document.createElement('div');
+            section.className = 'agent-plan-section';
+            
+            const h4 = document.createElement('h4');
+            h4.innerHTML = `<i data-lucide="${icon}"></i> ${title}`;
+            section.appendChild(h4);
+
+            if (title === 'Thought') {
+                const blockquote = document.createElement('blockquote');
+                blockquote.textContent = content;
+                section.appendChild(blockquote);
+            } else {
+                const p = document.createElement('p');
+                p.textContent = content;
+                section.appendChild(p);
+            }
+            return section;
+        };
+
+        if (plan.observation) {
+            container.appendChild(createSection('eye', 'Observation', plan.observation));
+        }
+        if (plan.thought) {
+            container.appendChild(createSection('lightbulb', 'Thought', plan.thought));
+        }
+        if (plan.action) {
+            container.appendChild(createSection('zap', 'Action', plan.action));
+        }
+        
+        // Re-initialize Lucide icons for new content
+        lucide.createIcons();
+    }
+
+    function renderYamlAsHtml(yamlData, container) {
+        if (!container) return;
+        container.innerHTML = '';
+        if (typeof yamlData === 'object' && yamlData !== null) {
+            const ul = document.createElement('ul');
+            for (const key in yamlData) {
+                const li = document.createElement('li');
+                const strong = document.createElement('strong');
+                strong.textContent = `${key}: `;
+                li.appendChild(strong);
+
+                const value = yamlData[key];
+                if (Array.isArray(value)) {
+                    const subContainer = document.createElement('div');
+                    renderYamlAsHtml(value, subContainer);
+                    li.appendChild(subContainer);
+                } else if (typeof value === 'object' && value !== null) {
+                    const subContainer = document.createElement('div');
+                    renderYamlAsHtml(value, subContainer);
+                    li.appendChild(subContainer);
+                } else {
+                    li.appendChild(document.createTextNode(value));
+                }
+                ul.appendChild(li);
+            }
+            container.appendChild(ul);
+        } else {
+            container.textContent = yamlData;
+        }
+    }
+
+    function initializeProgressIndicators() {
+        currentProgressStep = 0;
+        // Reset all steps
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+        document.querySelectorAll('.step-status').forEach(status => {
+            status.innerHTML = '<i data-lucide="clock"></i>';
+        });
+        // Reset progress bar
+        const progressBar = document.getElementById('generation-progress-bar');
+        const progressText = document.getElementById('generation-progress-text');
+        if (progressBar) {
+            progressBar.className = 'progress-bar';
+        }
+        if (progressText) {
+            progressText.textContent = 'Initializing...';
+        }
+        if (ui.progressPercentage) {
+            ui.progressPercentage.textContent = '0%';
+        }
+        // Re-initialize Lucide icons
+        lucide.createIcons();
+    }
+
+    function updateProgressStep(step, message = '') {
+        const steps = ['html', 'pdf', 'complete'];
+        const progressPercentages = [33, 66, 100];
+        const progressMessages = [
+            'Designing HTML layout...',
+            'Converting to PDF...',
+            'Finalizing document...'
+        ];
+
+        // Mark previous steps as completed
+        for (let i = 0; i < step; i++) {
+            const stepEl = document.getElementById(`step-${steps[i]}`);
+            const statusEl = document.getElementById(`status-${steps[i]}`);
+            if (stepEl && statusEl) {
+                stepEl.classList.remove('active');
+                stepEl.classList.add('completed');
+                statusEl.innerHTML = '<i data-lucide="check"></i>';
+            }
+        }
+
+        // Mark current step as active
+        if (step < steps.length) {
+            const currentStepEl = document.getElementById(`step-${steps[step]}`);
+            const currentStatusEl = document.getElementById(`status-${steps[step]}`);
+            if (currentStepEl && currentStatusEl) {
+                currentStepEl.classList.add('active');
+                currentStatusEl.innerHTML = '<i data-lucide="loader"></i>';
+            }
+        }
+
+        // Update progress bar
+        const progressBar = document.getElementById('generation-progress-bar');
+        const progressText = document.getElementById('generation-progress-text');
+        if (progressBar) {
+            progressBar.className = `progress-bar progress-${progressPercentages[step] || 100}`;
+        }
+        if (progressText) {
+            progressText.textContent = message || progressMessages[step] || 'Processing...';
+        }
+        if (ui.progressPercentage) {
+            ui.progressPercentage.textContent = `${progressPercentages[step] || 100}%`;
+        }
+
+        currentProgressStep = step;
+        
+        // Re-initialize Lucide icons
+        lucide.createIcons();
+    }
+
+    window.triggerStream = async function(action, bodyData = {}) {
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        try {
+            if (action === 'start') {
+                initialUserPrompt = bodyData.prompt;
+            }
+
+            const postResponse = await fetch('api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, ...bodyData })
+            });
+
+            const postResult = await postResponse.json();
+            if (!postResult.success) {
+                throw new Error(postResult.message || 'Failed to prepare server state.');
+            }
+
+            if (action === 'approve') {
+                showSection('generating');
+                if (ui.thoughtDisplay) ui.thoughtDisplay.textContent = '';
+                initializeProgressIndicators();
+                startTimer();
+            } else {
+                showSection('review');
+                if (ui.rawPlanDisplay) ui.rawPlanDisplay.textContent = '';
+                if (ui.agentPlanDisplay) ui.agentPlanDisplay.innerHTML = '';
+                if (ui.cvPlanDisplay) ui.cvPlanDisplay.innerHTML = '';
+                if (ui.cvGenerationStatus) ui.cvGenerationStatus.style.display = 'none';
+                if (ui.editSubsection) ui.editSubsection.style.display = 'none';
+                setReviewButtons(false);
+                
+                // Reset status indicators
+                const agentStatus = document.getElementById('agent-status');
+                const cvStatus = document.getElementById('cv-status');
+                if (agentStatus) agentStatus.textContent = 'Analyzing...';
+                if (cvStatus) cvStatus.textContent = 'Building...';
+            }
+            
+            if (ui.streamingIndicator) ui.streamingIndicator.classList.add('streaming');
+
+            eventSource = new EventSource('api.php');
+            
+            let currentState = 'init';
+            const cvKeywords = ['header', 'professional_summary', 'experience', 'education', 'skills_sections', 'certifications', 'publications', 'volunteer_work', 'notable_projects', 'testimonials', 'interests', 'languages', 'one_liner', 'highlights'];
+            let foundKeywords = new Set();
+
+            let liveRenderer = {
+                currentState: 'init',
+                observationEl: null, thoughtEl: null, actionEl: null,
+
+                createSection: function(icon, title) {
+                    const section = document.createElement('div');
+                    section.className = 'agent-plan-section';
+                    const h4 = document.createElement('h4');
+                    h4.innerHTML = `<i data-lucide="${icon}"></i> ${title}`;
+                    section.appendChild(h4);
+                    const contentEl = (title === 'Thought') ? document.createElement('blockquote') : document.createElement('p');
+                    section.appendChild(contentEl);
+                    return section;
+                },
+
+                update: function(chunk) {
+                    if (!ui.rawPlanDisplay) return;
+                    const fullText = ui.rawPlanDisplay.textContent;
+
+                    // State transitions and element creation
+                    if (this.currentState === 'init' && fullText.includes('observation:')) {
+                        this.currentState = 'streaming_observation';
+                        this.observationEl = this.createSection('eye', 'Observation');
+                        if (ui.agentPlanDisplay) ui.agentPlanDisplay.appendChild(this.observationEl);
+                        lucide.createIcons();
+                    }
+                    if (this.currentState === 'streaming_observation' && fullText.includes('thought:')) {
+                        this.currentState = 'streaming_thought';
+                        this.thoughtEl = this.createSection('lightbulb', 'Thought');
+                        if (ui.agentPlanDisplay) ui.agentPlanDisplay.appendChild(this.thoughtEl);
+                        lucide.createIcons();
+                    }
+                    if (this.currentState === 'streaming_thought' && fullText.includes('action:')) {
+                        this.currentState = 'streaming_action';
+                        this.actionEl = this.createSection('zap', 'Action');
+                        if (ui.agentPlanDisplay) ui.agentPlanDisplay.appendChild(this.actionEl);
+                        lucide.createIcons();
+                    }
+                    if (this.currentState !== 'streaming_cv' && fullText.includes('cv:')) {
+                        this.currentState = 'streaming_cv';
+                        if (ui.cvGenerationStatus) ui.cvGenerationStatus.style.display = 'block';
+                    }
+
+                    // Update content
+                    const cleanFullText = fullText.replace(/```yaml\s*agent_plan:/, '').trim();
+                    
+                    if (this.observationEl) {
+                        let text = cleanFullText.split('thought:')[0].replace('observation:', '').trim();
+                        const pEl = this.observationEl.querySelector('p');
+                        if (pEl) pEl.textContent = text;
+                    }
+                    if (this.thoughtEl) {
+                        let text = cleanFullText.split('thought:')[1] || '';
+                        text = text.split('action:')[0].trim();
+                        const blockquoteEl = this.thoughtEl.querySelector('blockquote');
+                        if (blockquoteEl) blockquoteEl.textContent = text;
+                    }
+                    if (this.actionEl) {
+                        let text = cleanFullText.split('action:')[1] || '';
+                        text = text.split('cv:')[0].trim();
+                        const pEl = this.actionEl.querySelector('p');
+                        if (pEl) pEl.textContent = text;
+                    }
+
+                    if (this.currentState === 'streaming_cv') {
+                        for (const keyword of cvKeywords) {
+                            if (fullText.includes(`${keyword}:`) && !foundKeywords.has(keyword)) {
+                                foundKeywords.add(keyword);
+                                if (ui.cvGenerationStatus) {
+                                    ui.cvGenerationStatus.textContent = `✓ Generating ${keyword.replace('_', ' ')} section...`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            eventSource.addEventListener('plan_chunk', (e) => {
+                const data = JSON.parse(e.data);
+                const chunk = data.chunk;
+                if (ui.rawPlanDisplay) ui.rawPlanDisplay.textContent += chunk;
+                liveRenderer.update(chunk);
+            });
+
+            eventSource.addEventListener('plan_finished', (e) => {
+                console.log("Received plan_finished event:", e.data);
+                try {
+                    if (ui.cvGenerationStatus) ui.cvGenerationStatus.style.display = 'none';
+                    const data = JSON.parse(e.data);
+                    const fullPlan = data.plan;
+                    console.log("Parsed plan data:", fullPlan);
+                    console.log("Plan has agent_plan:", !!fullPlan.agent_plan);
+                    console.log("Plan has cv:", !!fullPlan.cv);
+                    renderFinalPlan(fullPlan);
+                } catch (err) {
+                    console.error("Final Rendering Error:", err);
+                    if (ui.errorMessage) ui.errorMessage.textContent = `Unable to render final plan. Error: ${err.message}`;
+                    showSection('error');
+                }
+                setReviewButtons(true);
+                if (ui.streamingIndicator) ui.streamingIndicator.classList.remove('streaming');
+                eventSource.close();
+            });
+            
+            eventSource.addEventListener('thought_chunk', (e) => {
+                const data = JSON.parse(e.data);
+                const chunk = data.chunk;
+                if (ui.thoughtDisplay) ui.thoughtDisplay.textContent += chunk;
+                
+                // Update progress based on thought content
+                if (chunk.includes('generate the final HTML') || chunk.includes('HTML based on')) {
+                    updateProgressStep(0, 'Generating HTML layout...');
+                } else if (chunk.includes('Converting the HTML to a PDF') || chunk.includes('PDF document')) {
+                    updateProgressStep(1, 'Converting to PDF format...');
+                } else if (chunk.includes('Finalizing') || chunk.includes('finishing touches')) {
+                    updateProgressStep(2, 'Adding finishing touches...');
+                }
+            });
+
+            eventSource.addEventListener('finished', (e) => {
+                const data = JSON.parse(e.data);
+                if (ui.pdfLink) ui.pdfLink.href = data.pdf_url;
+                
+                // Complete all progress steps
+                updateProgressStep(3, 'Complete! Your CV is ready for download.');
+                
+                // Stop timer
+                startTime = null;
+                
+                // Small delay to show completion, then switch to result
+                setTimeout(() => {
+                    showSection('result');
+                }, 1500);
+                
+                if (ui.streamingIndicator) ui.streamingIndicator.classList.remove('streaming');
+                eventSource.close();
+            });
+
+            eventSource.addEventListener('error', (e) => {
+                console.error("Received error event:", e.data);
+                try {
+                    const data = JSON.parse(e.data);
+                    if (ui.errorMessage) ui.errorMessage.textContent = data.message;
+                    console.error("Error message:", data.message);
+                    if (data.trace) {
+                        console.error("Error trace:", data.trace);
+                    }
+                } catch (parseErr) {
+                    console.error("Could not parse error data:", parseErr);
+                    if (ui.errorMessage) ui.errorMessage.textContent = "An unknown error occurred.";
+                }
+                showSection('error');
+                if (ui.streamingIndicator) ui.streamingIndicator.classList.remove('streaming');
+                eventSource.close();
+            });
+
+            eventSource.onerror = (err) => {
+                if (eventSource.readyState !== EventSource.CLOSED) {
+                    if (ui.errorMessage) ui.errorMessage.textContent = "A connection error occurred.";
+                    showSection('error');
+                }
+                if (ui.streamingIndicator) ui.streamingIndicator.classList.remove('streaming');
+                eventSource.close();
+            };
+
+        } catch (error) {
+            console.error('TriggerStream failed:', error);
+            if (ui.errorMessage) ui.errorMessage.textContent = error.message;
+            showSection('error');
+        }
+    }
+
+    // Event Listeners
+    if (ui.startButton) {
+        ui.startButton.addEventListener('click', () => {
+            if (ui.promptInput && ui.promptInput.value.trim()) {
+                triggerStream('start', { prompt: ui.promptInput.value });
+            }
+        });
+    }
+
+    if (ui.approveButton) {
+        ui.approveButton.addEventListener('click', () => {
+            triggerStream('approve');
+        });
+    }
+
+    if (ui.editButton) {
+        ui.editButton.addEventListener('click', () => {
+            if (ui.editPrompt) ui.editPrompt.value = '';
+            if (ui.editSubsection) ui.editSubsection.style.display = 'block';
+        });
+    }
+
+    if (ui.submitEditButton) {
+        ui.submitEditButton.addEventListener('click', () => {
+            if (ui.editPrompt && ui.editPrompt.value.trim()) {
+                triggerStream('submit_edit', { edit_prompt: ui.editPrompt.value });
+            }
+        });
+    }
+
+    const restart = () => {
+        location.reload();
+    };
+
+    if (ui.restartButton) ui.restartButton.addEventListener('click', restart);
+    if (ui.errorRestartButton) ui.errorRestartButton.addEventListener('click', restart);
+
+    // Initial state
+    showSection('prompt');
+});
+    </script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
