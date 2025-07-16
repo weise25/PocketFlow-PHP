@@ -14,7 +14,7 @@ This example demonstrates that PocketFlow-PHP isn't just for command-line applic
 - **Modern Web Frontend:** Responsive, real-time interface with streaming capabilities
 - **Simple Integration:** Clean API layer connecting frontend and backend
 
-Shows how quickly you can transform a command-line AI agent into a full-featured web application. The entire frontend is contained in a single HTML file (`frontend/index.html`) that includes all CSS and JavaScript, making it incredibly portable and easy to deploy.
+Shows how quickly you can transform a command-line AI agent into a full-featured web application. The entire frontend is contained in a single HTML file (`/index.html`) that includes all CSS and JavaScript, making it incredibly portable and easy to deploy.
 
 ## Overview
 
@@ -68,7 +68,7 @@ This example demonstrates how to build a complete web application with PocketFlo
 4.  **Start the Web Server:**
     Use PHP's built-in development server to serve the frontend directory.
     ```bash
-    php -S localhost:8000 -t frontend
+    php -S localhost:8000
     ```
 
 5.  **Open in Browser:**
