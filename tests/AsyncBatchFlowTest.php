@@ -19,7 +19,7 @@ class AsyncBatchFlowTest extends TestCase
         await(async(function() {
             $shared = new stdClass();
             $shared->results = [];
-            // Ein Array, um die Start- und Endzeiten jedes Tasks zu speichern
+            // An array to store the start and end times of each task
             $shared->timestamps = [];
 
             $processNode = new class extends AsyncNode {
@@ -28,12 +28,12 @@ class AsyncBatchFlowTest extends TestCase
                         $id = $this->params['id'];
                         $shared = $this->params['shared_state'];
                         
-                        // Zeichne den Startzeitpunkt auf
+                        // Record the start time
                         $shared->timestamps[$id]['start'] = microtime(true);
                         
-                        await(sleep(0.02)); // Kurze Latenz
+                        await(sleep(0.02)); // Short latency
                         
-                        // Zeichne den Endzeitpunkt auf
+                        // Record the end time
                         $shared->timestamps[$id]['end'] = microtime(true);
                         
                         return "Processed: {$id}";
@@ -55,16 +55,16 @@ class AsyncBatchFlowTest extends TestCase
                 }
             };
 
-            // Übergebe den shared-Store an die params, damit die Knoten darauf zugreifen können
+            // Pass the shared store to the params so that the nodes can access it
             $parallelBatchFlow->setParams(['shared_state' => $shared]);
             await($parallelBatchFlow->run_async($shared));
 
             $this->assertCount(3, $shared->results);
             $this->assertCount(3, $shared->timestamps);
 
-            // Logischer Beweis der Parallelisierung:
-            // Der Startzeitpunkt von Task B muss VOR dem Endzeitpunkt von Task A liegen.
-            // Wenn sie sequentiell wären, wäre der Start von B NACH dem Ende von A.
+            // Logical proof of parallelization:
+            // The start time of task B must be BEFORE the end time of task A.
+            // If they were sequential, the start of B would be AFTER the end of A.
             $this->assertLessThan(
                 $shared->timestamps['A']['end'],
                 $shared->timestamps['B']['start'],
