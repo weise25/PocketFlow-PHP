@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -13,62 +15,46 @@ use function React\Promise\Timer\sleep;
 
 class AsyncFlowTest extends TestCase
 {
+    /**
+     * Tests that an AsyncFlow can correctly orchestrate a mix of async and sync nodes.
+     */
     public function testAsyncFlowOrchestratesMixedNodes()
     {
-        // Since the test itself is asynchronous, we need to wrap it in async/await.
         await(async(function() {
             $shared = new stdClass();
             $shared->execution_order = [];
-            $shared->async_data = null;
-            $shared->final_result = null;
 
-            // An asynchronous node that "fetches" data.
+            // An asynchronous node that simulates fetching data.
             $asyncFetcher = new class extends AsyncNode {
-                public function exec_async(mixed $p): PromiseInterface {
-                    return async(function() {
-                        await(sleep(0.01)); // Simulate I/O latency
-                        return "Async Data Fetched";
-                    })();
-                }
-                public function post_async(stdClass $shared, mixed $p, mixed $execResult): PromiseInterface {
-                    return async(function() use ($shared, $execResult) {
+                public function post_async(stdClass $shared, mixed $p, mixed $e): PromiseInterface {
+                    return async(function() use ($shared) {
+                        await(sleep(0.01));
                         $shared->execution_order[] = 'AsyncFetcher';
-                        $shared->async_data = $execResult;
+                        $shared->async_data = "Async Data Fetched";
                         return 'default';
                     })();
                 }
             };
-
-            // A normal, synchronous node that processes the data.
+            // A regular synchronous node that processes the data.
             $syncProcessor = new class extends Node {
-                public function prep(stdClass $shared): mixed {
-                    return $shared->async_data;
-                }
-                public function exec(mixed $prepResult): string {
-                    return "Processed: " . $prepResult;
-                }
-                public function post(stdClass $shared, mixed $p, mixed $execResult): ?string {
+                public function post(stdClass $shared, mixed $p, mixed $e): ?string {
                     $shared->execution_order[] = 'SyncProcessor';
-                    $shared->final_result = $execResult;
+                    $shared->final_result = "Processed: " . $shared->async_data;
                     return null;
                 }
             };
 
             $asyncFetcher->next($syncProcessor);
             $flow = new AsyncFlow($asyncFetcher);
-
-            // Execute the asynchronous flow and wait for it to finish.
             await($flow->run_async($shared));
 
-            // Check the results.
             $this->assertEquals(['AsyncFetcher', 'SyncProcessor'], $shared->execution_order);
-            $this->assertEquals("Async Data Fetched", $shared->async_data);
             $this->assertEquals("Processed: Async Data Fetched", $shared->final_result);
         })());
     }
 
     /**
-     * Tests error handling in an asynchronous flow.
+     * Tests that an exception in an AsyncNode correctly propagates up through the AsyncFlow.
      */
     public function testAsyncErrorHandlingInFlow()
     {

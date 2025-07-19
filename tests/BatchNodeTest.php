@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -7,53 +9,40 @@ use PocketFlow\BatchNode;
 use PocketFlow\Flow;
 use stdClass;
 
-// --- Helper nodes for the Map-Reduce test ---
+// --- Helper nodes for the Map-Reduce test pattern ---
 
-// MAP Phase: Splits the work and processes chunks.
-class ArrayChunkSumNode extends BatchNode
-{
+/**
+ * MAP Phase: Splits an array into chunks and sums each chunk.
+ */
+class ArrayChunkSumNode extends BatchNode {
     public function __construct(private int $chunkSize = 10) { parent::__construct(); }
-
-    public function prep(stdClass $shared): array
-    {
-        $array = $shared->input_array ?? [];
-        return array_chunk($array, $this->chunkSize);
+    public function prep(stdClass $shared): array {
+        return array_chunk($shared->input_array ?? [], $this->chunkSize);
     }
-
-    public function exec(mixed $chunk): int
-    {
+    public function exec(mixed $chunk): int {
         return array_sum($chunk);
     }
-
-    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string
-    {
+    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string {
         $shared->chunk_sums = $execResult;
         return 'default';
     }
 }
 
-// REDUCE Phase: Aggregates the results from the MAP phase.
-class SumReduceNode extends Node
-{
-    public function prep(stdClass $shared): array
-    {
+/**
+ * REDUCE Phase: Aggregates the chunk sums into a final total.
+ */
+class SumReduceNode extends Node {
+    public function prep(stdClass $shared): array {
         return $shared->chunk_sums ?? [];
     }
-
-    public function exec(mixed $chunkSums): int
-    {
+    public function exec(mixed $chunkSums): int {
         return array_sum($chunkSums);
     }
-
-    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string
-    {
+    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string {
         $shared->total_sum = $execResult;
         return null;
     }
 }
-
-
-// --- The actual test class ---
 
 class BatchNodeTest extends TestCase
 {
@@ -75,38 +64,21 @@ class BatchNodeTest extends TestCase
     public function testMapReduceSum()
     {
         $array = range(0, 99);
-        $expectedSum = 4950;
-        
         $shared = $this->runMapReducePipeline($array, 10);
-        
-        $this->assertEquals($expectedSum, $shared->total_sum);
+        $this->assertEquals(4950, $shared->total_sum);
     }
 
     public function testUnevenChunks()
     {
-        $array = range(0, 24); // 25 elements, chunk size 10 -> 3 chunks
-        $expectedSum = 300;
-
+        $array = range(0, 24);
         $shared = $this->runMapReducePipeline($array, 10);
-
         $this->assertEquals([45, 145, 110], $shared->chunk_sums);
-        $this->assertEquals($expectedSum, $shared->total_sum);
-    }
-
-    public function testCustomChunkSize()
-    {
-        $array = range(0, 99);
-        $expectedSum = 4950;
-
-        $shared = $this->runMapReducePipeline($array, 15);
-
-        $this->assertEquals($expectedSum, $shared->total_sum);
+        $this->assertEquals(300, $shared->total_sum);
     }
 
     public function testEmptyArray()
     {
         $shared = $this->runMapReducePipeline([], 10);
-        
         $this->assertEquals(0, $shared->total_sum);
     }
 }

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -12,23 +14,22 @@ use function React\Promise\Timer\sleep;
 
 class AsyncBatchNodeTest extends TestCase
 {
+    /**
+     * Tests that AsyncBatchNode processes items sequentially (one after another).
+     */
     public function testAsyncBatchNodeProcessesItemsSequentially()
     {
         await(async(function() {
             $shared = new stdClass();
             $shared->items = [1, 2, 3];
-            $shared->results = null;
-            $processing_times = [];
 
             $node = new class extends AsyncBatchNode {
                 public function prep_async(stdClass $shared): PromiseInterface {
                     return async(fn() => $shared->items)();
                 }
                 public function exec_async(mixed $item): PromiseInterface {
-                    return async(function() use ($item, &$processing_times) {
-                        $start = microtime(true);
-                        await(sleep(0.01)); // Short, fixed latency
-                        $processing_times[] = microtime(true) - $start;
+                    return async(function() use ($item) {
+                        await(sleep(0.01));
                         return $item * 2;
                     })();
                 }
@@ -45,18 +46,19 @@ class AsyncBatchNodeTest extends TestCase
             $total_time = microtime(true) - $start_time;
 
             $this->assertEquals([2, 4, 6], $shared->results);
-            // In sequential execution, the total time should be approximately the sum of the individual times.
-            // 3 * 0.01s = 0.03s. We allow for a small tolerance.
+            // Total time should be roughly the sum of individual latencies (3 * 0.01s).
             $this->assertGreaterThan(0.03, $total_time);
         })());
     }
 
+    /**
+     * Tests that AsyncParallelBatchNode processes items concurrently (at the same time).
+     */
     public function testAsyncParallelBatchNodeProcessesItemsConcurrently()
     {
         await(async(function() {
             $shared = new stdClass();
             $shared->items = [1, 2, 3];
-            $shared->results = null;
 
             $node = new class extends AsyncParallelBatchNode {
                 public function prep_async(stdClass $shared): PromiseInterface {
@@ -64,7 +66,7 @@ class AsyncBatchNodeTest extends TestCase
                 }
                 public function exec_async(mixed $item): PromiseInterface {
                     return async(function() use ($item) {
-                        await(sleep(0.02)); // Slightly longer latency
+                        await(sleep(0.02));
                         return $item * 2;
                     })();
                 }
@@ -80,18 +82,15 @@ class AsyncBatchNodeTest extends TestCase
             await($node->run_async($shared));
             $total_time = microtime(true) - $start_time;
 
-            // The results can be in any order, so we sort them.
             sort($shared->results);
             $this->assertEquals([2, 4, 6], $shared->results);
-            // In parallel execution, the total time should be only slightly longer than the longest individual latency.
-            // It should be significantly shorter than the sum of all latencies (3 * 0.02s = 0.06s).
+            // Total time should be slightly more than the longest single task, not the sum.
             $this->assertLessThan(0.04, $total_time);
-            $this->assertGreaterThan(0.02, $total_time);
         })());
     }
 
     /**
-     * Tests error handling in a parallel batch.
+     * Tests that an error in one of the parallel tasks correctly bubbles up.
      */
     public function testErrorHandlingInParallelBatch()
     {

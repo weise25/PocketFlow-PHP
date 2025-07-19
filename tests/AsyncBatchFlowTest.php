@@ -1,10 +1,11 @@
 <?php
+declare(strict_types=1);
+
 namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
 use PocketFlow\AsyncNode;
 use PocketFlow\AsyncFlow;
-use PocketFlow\AsyncBatchFlow;
 use PocketFlow\AsyncParallelBatchFlow;
 use React\Promise\PromiseInterface;
 use stdClass;
@@ -23,10 +24,9 @@ class AsyncBatchFlowTest extends TestCase
             $shared->timestamps = [];
 
             $processNode = new class extends AsyncNode {
-                public function exec_async(mixed $p): PromiseInterface {
-                    return async(function() {
+                public function post_async(stdClass $shared, mixed $p, mixed $e): PromiseInterface {
+                    return async(function() use ($shared) {
                         $id = $this->params['id'];
-                        $shared = $this->params['shared_state'];
                         
                         // Record the start time
                         $shared->timestamps[$id]['start'] = microtime(true);
@@ -36,27 +36,19 @@ class AsyncBatchFlowTest extends TestCase
                         // Record the end time
                         $shared->timestamps[$id]['end'] = microtime(true);
                         
-                        return "Processed: {$id}";
-                    })();
-                }
-                public function post_async(stdClass $shared, mixed $p, mixed $execResult): PromiseInterface {
-                    return async(function() use ($shared, $execResult) {
-                        $shared->results[] = $execResult;
+                        $shared->results[] = "Processed in parallel: {$id}";
                         return null;
                     })();
                 }
             };
 
             $subFlow = new AsyncFlow($processNode);
-
             $parallelBatchFlow = new class($subFlow) extends AsyncParallelBatchFlow {
                 public function prep_async(stdClass $shared): PromiseInterface {
                     return async(fn() => [['id' => 'A'], ['id' => 'B'], ['id' => 'C']])();
                 }
             };
 
-            // Pass the shared store to the params so that the nodes can access it
-            $parallelBatchFlow->setParams(['shared_state' => $shared]);
             await($parallelBatchFlow->run_async($shared));
 
             $this->assertCount(3, $shared->results);

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -8,6 +10,9 @@ use Throwable;
 
 class NodeTest extends TestCase
 {
+    /**
+     * Tests that a simple node executes its prep -> exec -> post lifecycle correctly.
+     */
     public function testNodeExecutesSuccessfully()
     {
         $shared = new stdClass();
@@ -23,12 +28,13 @@ class NodeTest extends TestCase
             }
         };
 
-        // We call the public `run` method
         $node->run($shared);
-
         $this->assertEquals("success", $shared->result);
     }
 
+    /**
+     * Tests that the retry mechanism correctly re-executes the exec() method upon failure.
+     */
     public function testNodeRetriesOnFailureAndSucceeds()
     {
         $shared = new stdClass();
@@ -37,17 +43,17 @@ class NodeTest extends TestCase
 
         $node = new class(maxRetries: 3) extends Node {
             public function exec(mixed $prepResult): string {
-                // Access shared object to track attempts, as class is recreated in a real flow
-                $this->params['shared']->attempts++;
-                if ($this->params['shared']->attempts < 3) {
+                // NOTE: This test intentionally mutates state passed from prep() inside exec()
+                // to isolate and verify the retry mechanism without needing a full Flow.
+                // This is a violation of the "pure exec" rule for the sake of a focused unit test.
+                $prepResult->attempts++;
+                if ($prepResult->attempts < 3) {
                     throw new \Exception("Failed attempt");
                 }
                 return "success on attempt 3";
             }
-            public function prep(stdClass $shared): mixed {
-                // Pass shared object to exec via params for tracking
-                $this->params['shared'] = $shared;
-                return null;
+            public function prep(stdClass $shared): stdClass {
+                return $shared;
             }
             public function post(stdClass $shared, mixed $prepResult, mixed $execResult): ?string {
                 $shared->result = $execResult;
@@ -55,13 +61,14 @@ class NodeTest extends TestCase
             }
         };
 
-        // Call the public `run` method
         $node->run($shared);
-
         $this->assertEquals(3, $shared->attempts);
         $this->assertEquals("success on attempt 3", $shared->result);
     }
 
+    /**
+     * Tests that the execFallback() method is called after all retries have been exhausted.
+     */
     public function testNodeUsesFallbackAfterAllRetriesFail()
     {
         $shared = new stdClass();
@@ -72,8 +79,6 @@ class NodeTest extends TestCase
                 throw new \Exception("Always fails");
             }
             public function execFallback(mixed $prepResult, Throwable $e): mixed {
-                // The fallback should return a value, not throw another exception
-                // unless that is the desired behavior.
                 return "fallback result";
             }
             public function post(stdClass $shared, mixed $prepResult, mixed $execResult): ?string {
@@ -82,16 +87,15 @@ class NodeTest extends TestCase
             }
         };
 
-        // Call the public `run` method
         $node->run($shared);
-
-        // We assert that the fallback result was stored in the shared object
         $this->assertEquals("fallback result", $shared->result);
     }
 
+    /**
+     * Tests that an exception thrown from within execFallback() propagates up correctly.
+     */
     public function testNodeThrowsExceptionIfFallbackThrows()
     {
-        // This test now checks if the exception from the fallback propagates up.
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("All retries failed and fallback also failed");
 
@@ -100,12 +104,10 @@ class NodeTest extends TestCase
                 throw new \Exception("Always fails");
             }
             public function execFallback(mixed $prepResult, Throwable $e): mixed {
-                // Now the fallback throws the exception we want to catch
                 throw new \RuntimeException("All retries failed and fallback also failed", 0, $e);
             }
         };
 
-        // The public `run` method should now throw the exception
         $node->run(new stdClass());
     }
 }

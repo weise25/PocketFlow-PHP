@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace PocketFlow;
 
@@ -7,8 +8,11 @@ use stdClass;
 use Throwable;
 use function React\Async\await;
 use function React\Async\async;
-use function React\Promise\all;
+use function React\Promise\all; 
 use function React\Promise\Timer\sleep as async_sleep;
+
+// Marker interface to avoid reflection.
+interface AsyncRunnable {}
 
 // Helper class to enable the ->on('action')->next($node) syntax
 class ConditionalTransition
@@ -32,7 +36,6 @@ abstract class BaseNode
         $this->params = $params;
     }
 
-    // Allow ?BaseNode to enable explicit flow termination points.
     public function next(?BaseNode $node, string $action = 'default'): ?BaseNode
     {
         if (isset($this->successors[$action])) {
@@ -80,8 +83,6 @@ abstract class BaseNode
 // A standard node with retry and fallback logic
 class Node extends BaseNode
 {
-    protected int $currentRetry = 0;
-
     public function __construct(public int $maxRetries = 1, public int $wait = 0) {}
 
     public function execFallback(mixed $prepResult, Throwable $e): mixed
@@ -91,11 +92,11 @@ class Node extends BaseNode
 
     protected function _exec(mixed $prepResult): mixed
     {
-        for ($this->currentRetry = 0; $this->currentRetry < $this->maxRetries; $this->currentRetry++) {
+        for ($retryCount = 0; $retryCount < $this->maxRetries; $retryCount++) {
             try {
                 return $this->exec($prepResult);
             } catch (Throwable $e) {
-                if ($this->currentRetry === $this->maxRetries - 1) {
+                if ($retryCount === $this->maxRetries - 1) {
                     return $this->execFallback($prepResult, $e);
                 }
                 if ($this->wait > 0) {
@@ -134,10 +135,8 @@ class Flow extends BaseNode
     protected function getNextNode(?BaseNode $current, ?string $action): ?BaseNode
     {
         if (!$current) return null;
-
         $actionKey = $action ?? 'default';
         $successors = $current->getSuccessors();
-
         if (!array_key_exists($actionKey, $successors)) {
             if (!empty($successors)) {
                 $availableActions = implode("', '", array_keys($successors));
@@ -145,7 +144,6 @@ class Flow extends BaseNode
             }
             return null;
         }
-        
         return $successors[$actionKey];
     }
 
@@ -157,8 +155,7 @@ class Flow extends BaseNode
 
         while ($current) {
             $current->setParams($p);
-            $reflection = new \ReflectionClass($current);
-            if ($reflection->isSubclassOf(AsyncNode::class) || $reflection->isSubclassOf(AsyncFlow::class)) {
+            if ($current instanceof AsyncRunnable) {
                  $lastAction = await($current->_run_async($shared));
             } else {
                  $lastAction = $current->_run($shared);
@@ -200,7 +197,6 @@ trait AsyncLogicTrait
 {
     public int $maxRetries = 1;
     public int $wait = 0;
-    protected int $currentRetry = 0;
 
     public function prep_async(stdClass $shared): PromiseInterface { return async(fn() => null)(); }
     public function exec_async(mixed $prepResult): PromiseInterface { return async(fn() => null)(); }
@@ -210,11 +206,11 @@ trait AsyncLogicTrait
     public function _exec_async(mixed $prepResult): PromiseInterface
     {
         return async(function () use ($prepResult) {
-            for ($this->currentRetry = 0; $this->currentRetry < $this->maxRetries; $this->currentRetry++) {
+            for ($retryCount = 0; $retryCount < $this->maxRetries; $retryCount++) {
                 try {
                     return await($this->exec_async($prepResult));
                 } catch (Throwable $e) {
-                    if ($this->currentRetry === $this->maxRetries - 1) {
+                    if ($retryCount === $this->maxRetries - 1) {
                         return await($this->exec_fallback_async($prepResult, $e));
                     }
                     if ($this->wait > 0) {
@@ -249,7 +245,7 @@ trait AsyncLogicTrait
     }
 }
 
-class AsyncNode extends BaseNode
+class AsyncNode extends BaseNode implements AsyncRunnable
 {
     use AsyncLogicTrait;
     public function __construct(int $maxRetries = 1, int $wait = 0)
@@ -277,17 +273,33 @@ class AsyncParallelBatchNode extends AsyncNode
 {
     public function _exec_async(mixed $items): PromiseInterface
     {
-        $promises = [];
-        foreach ($items ?? [] as $item) {
-            $promises[] = parent::_exec_async($item);
-        }
-        return all($promises);
+        return async(function () use ($items) {
+            $promises = [];
+            foreach ($items ?? [] as $item) {
+                $promise = parent::_exec_async($item);
+                // Manually implement "settle" logic
+                $promises[] = $promise->then(
+                    fn($value) => ['state' => 'fulfilled', 'value' => $value],
+                    fn($reason) => ['state' => 'rejected', 'reason' => $reason]
+                );
+            }
+            $results = await(all($promises));
+            
+            $finalResults = [];
+            foreach ($results as $result) {
+                if ($result['state'] === 'rejected') {
+                    throw $result['reason'];
+                }
+                $finalResults[] = $result['value'];
+            }
+            return $finalResults;
+        })();
     }
 }
 
-class AsyncFlow extends Flow
+class AsyncFlow extends Flow implements AsyncRunnable
 {
-    protected function _orchestrate_async(stdClass $shared, ?array $params = null): PromiseInterface
+    public function _orchestrate_async(stdClass $shared, ?array $params = null): PromiseInterface
     {
         return async(function () use ($shared, $params) {
             $current = $this->startNode;
@@ -296,7 +308,7 @@ class AsyncFlow extends Flow
 
             while ($current) {
                 $current->setParams($p);
-                if ($current instanceof self || $current instanceof AsyncNode) {
+                if ($current instanceof AsyncRunnable) {
                     $lastAction = await($current->_run_async($shared));
                 } else {
                     $lastAction = $current->_run($shared);
@@ -307,16 +319,13 @@ class AsyncFlow extends Flow
         })();
     }
 
-    // Refactor: Re-introduced _run_async for internal orchestration of nested flows.
-    protected function _run_async(stdClass $shared): PromiseInterface
+    public function _run_async(stdClass $shared): PromiseInterface
     {
-        // The "run" logic for a flow is simply to orchestrate it.
         return $this->_orchestrate_async($shared, $this->params);
     }
 
     public function run_async(stdClass $shared): PromiseInterface
     {
-        // The public entry point calls the internal run logic.
         return $this->_run_async($shared);
     }
 
@@ -359,9 +368,19 @@ class AsyncParallelBatchFlow extends AsyncFlow
             $paramList = await($this->prep_async($shared)) ?? [];
             $promises = [];
             foreach ($paramList as $batchParams) {
-                $promises[] = $this->_orchestrate_async($shared, array_merge($this->params, $batchParams));
+                $promise = $this->_orchestrate_async($shared, array_merge($this->params, $batchParams));
+                // Manually implement "settle" logic
+                $promises[] = $promise->then(
+                    fn($value) => ['state' => 'fulfilled', 'value' => $value],
+                    fn($reason) => ['state' => 'rejected', 'reason' => $reason]
+                );
             }
-            await(all($promises));
+            $results = await(all($promises));
+            foreach ($results as $result) {
+                if ($result['state'] === 'rejected') {
+                    throw $result['reason'];
+                }
+            }
             return await($this->post_async($shared, $paramList, null));
         })();
     }
