@@ -1,6 +1,6 @@
 {
     "name": "weise25/pocketflow-php",
-    "version": "0.1",
+    "version": "0.1.0",
     "description": "A PHP port of the minimalist LLM framework PocketFlow.",
     "type": "library",
     "license": "MIT",
