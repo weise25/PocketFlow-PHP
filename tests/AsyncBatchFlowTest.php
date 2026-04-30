@@ -7,8 +7,8 @@ use PHPUnit\Framework\TestCase;
 use PocketFlow\AsyncNode;
 use PocketFlow\AsyncFlow;
 use PocketFlow\AsyncParallelBatchFlow;
+use PocketFlow\SharedStore;
 use React\Promise\PromiseInterface;
-use stdClass;
 use function React\Async\async;
 use function React\Async\await;
 use function React\Promise\Timer\sleep;
@@ -18,24 +18,24 @@ class AsyncBatchFlowTest extends TestCase
     public function testAsyncParallelBatchFlowProcessesFlowsConcurrently()
     {
         await(async(function() {
-            $shared = new stdClass();
+            $shared = new SharedStore();
             $shared->results = [];
             // An array to store the start and end times of each task
             $shared->timestamps = [];
 
             $processNode = new class extends AsyncNode {
-                public function post_async(stdClass $shared, mixed $p, mixed $e): PromiseInterface {
+                public function postAsync(SharedStore $shared, mixed $p, mixed $e): PromiseInterface {
                     return async(function() use ($shared) {
                         $id = $this->params['id'];
-                        
+
                         // Record the start time
                         $shared->timestamps[$id]['start'] = microtime(true);
-                        
+
                         await(sleep(0.02)); // Short latency
-                        
+
                         // Record the end time
                         $shared->timestamps[$id]['end'] = microtime(true);
-                        
+
                         $shared->results[] = "Processed in parallel: {$id}";
                         return null;
                     })();
@@ -44,12 +44,12 @@ class AsyncBatchFlowTest extends TestCase
 
             $subFlow = new AsyncFlow($processNode);
             $parallelBatchFlow = new class($subFlow) extends AsyncParallelBatchFlow {
-                public function prep_async(stdClass $shared): PromiseInterface {
+                public function prepAsync(SharedStore $shared): PromiseInterface {
                     return async(fn() => [['id' => 'A'], ['id' => 'B'], ['id' => 'C']])();
                 }
             };
 
-            await($parallelBatchFlow->run_async($shared));
+            await($parallelBatchFlow->runAsync($shared));
 
             $this->assertCount(3, $shared->results);
             $this->assertCount(3, $shared->timestamps);
@@ -76,10 +76,10 @@ class AsyncBatchFlowTest extends TestCase
             $this->expectException(\ValueError::class);
             $this->expectExceptionMessage("Async error on B");
 
-            $shared = new stdClass();
+            $shared = new SharedStore();
 
             $errorNode = new class extends AsyncNode {
-                public function exec_async(mixed $p): PromiseInterface {
+                public function execAsync(mixed $p): PromiseInterface {
                     return async(function() {
                         if ($this->params['id'] === 'B') {
                             throw new \ValueError("Async error on B");
@@ -91,12 +91,12 @@ class AsyncBatchFlowTest extends TestCase
 
             $subFlow = new AsyncFlow($errorNode);
             $parallelBatchFlow = new class($subFlow) extends AsyncParallelBatchFlow {
-                public function prep_async(stdClass $shared): PromiseInterface {
+                public function prepAsync(SharedStore $shared): PromiseInterface {
                     return async(fn() => [['id' => 'A'], ['id' => 'B']])();
                 }
             };
 
-            await($parallelBatchFlow->run_async($shared));
+            await($parallelBatchFlow->runAsync($shared));
         })());
     }
 }

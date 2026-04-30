@@ -6,7 +6,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-function convert_html_to_pdf(string $htmlContent, string $filename): string
+function convertHtmlToPdf(string $htmlContent, string $filename): string
 {
     $outputsDir = __DIR__ . '/../outputs';
     if (!is_dir($outputsDir)) {
@@ -34,7 +34,7 @@ if (basename(__FILE__) === basename($_SERVER['PHP_SELF'])) {
     $sampleHtml = '<html><body><h1>Hello, World!</h1><p>This is a test PDF from dompdf.</p></body></html>';
     $outputFile = 'test_cv.pdf';
     try {
-        $savedPath = convert_html_to_pdf($sampleHtml, $outputFile);
+        $savedPath = convertHtmlToPdf($sampleHtml, $outputFile);
         echo "PDF successfully created at: " . $savedPath . "\n";
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage() . "\n";

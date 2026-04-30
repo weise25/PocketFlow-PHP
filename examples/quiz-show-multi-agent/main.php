@@ -19,4 +19,4 @@ while ($pointsToWin < 1 || $pointsToWin > 10) {
 }
 
 // Start the quizshow with the specified number of points
-create_quiz_show_flow($pointsToWin);
+createQuizShowFlow($pointsToWin);

@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/nodes.php';
 use PocketFlow\Flow;
 
-function create_research_agent_flow(): Flow
+function createResearchAgentFlow(): Flow
 {
     $decideNode = new DecideActionNode();
     $planNode = new PlanSearchesNode();

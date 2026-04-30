@@ -9,7 +9,7 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-function call_llm(string $prompt, array $history = []): string
+function callLlm(string $prompt, array $history = []): string
 {
     $apiKey = $_ENV['OPENROUTER_API_KEY'];
     $llmName = $_ENV['LLM_NAME'];
@@ -35,7 +35,7 @@ function call_llm(string $prompt, array $history = []): string
     return $response->choices[0]->message->content;
 }
 
-function call_llm_stream(string $prompt, array $history = []): iterable
+function callLlmStream(string $prompt, array $history = []): iterable
 {
     $apiKey = $_ENV['OPENROUTER_API_KEY'];
     $llmName = $_ENV['LLM_NAME'];
@@ -63,7 +63,7 @@ function call_llm_stream(string $prompt, array $history = []): iterable
 if (basename(__FILE__) === basename($_SERVER['PHP_SELF'])) {
     try {
         echo "Testing LLM API...\n";
-        $response = call_llm("What is the capital of France?");
+        $response = callLlm("What is the capital of France?");
         echo "LLM Response: " . $response . "\n";
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage() . "\n";

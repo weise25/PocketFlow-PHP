@@ -1,18 +1,21 @@
 <?php
 
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/nodes.php';
+require_once __DIR__ . '/utils/openrouter_api.php';
 
+use PocketFlow\SharedStore;
 use PocketFlow\AsyncFlow;
 use PocketFlow\AsyncNode;
 use React\Promise\PromiseInterface;
 use function React\Async\async;
 use function React\Async\await;
 
-function create_quiz_show_flow(int $pointsToWin): void
+function createQuizShowFlow(int $pointsToWin): void
 {
     async(function () use ($pointsToWin) {
         // 1. Initialize the shared state
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->quizmasterQueue = new MessageQueue();
         $shared->player1Queue = new MessageQueue();
         $shared->player2Queue = new MessageQueue();
@@ -23,9 +26,9 @@ function create_quiz_show_flow(int $pointsToWin): void
 
         // 2. Define the models for the agents
         $models = [
-            'quizmaster' => 'deepseek/deepseek-chat-v3-0324:free',
-            'player1' => 'google/gemma-3-27b-it:free',
-            'player2' => 'mistralai/mistral-small-3.2-24b-instruct:free',
+            'quizmaster' => 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+            'player1' => 'poolside/laguna-xs.2:free',
+            'player2' => 'deepseek/deepseek-v4-flash',
         ];
 
         // 3. Create the agent nodes
@@ -79,9 +82,9 @@ function create_quiz_show_flow(int $pointsToWin): void
 
         // 8. Run all flows concurrently
         await(\React\Promise\all([
-            $quizmasterFlow->run_async($shared),
-            $player1Flow->run_async($shared),
-            $player2Flow->run_async($shared),
+            $quizmasterFlow->runAsync($shared),
+            $player1Flow->runAsync($shared),
+            $player2Flow->runAsync($shared),
         ]));
 
         echo "\n--- Quiz Show has finished. ---\n";

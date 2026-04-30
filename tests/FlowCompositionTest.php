@@ -6,27 +6,27 @@ namespace PocketFlow\Tests;
 use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
 use PocketFlow\Flow;
-use stdClass;
+use PocketFlow\SharedStore;
 
 // --- Helper nodes for this test suite ---
 
 class NumberNode extends Node {
     public function __construct(private int $number) { parent::__construct(); }
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
         $shared->current = $this->number;
         return null;
     }
 }
 class AddNode extends Node {
     public function __construct(private int $number) { parent::__construct(); }
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
         $shared->current += $this->number;
         return null;
     }
 }
 class MultiplyNode extends Node {
     public function __construct(private int $number) { parent::__construct(); }
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
         $shared->current *= $this->number;
         return null;
     }
@@ -34,7 +34,7 @@ class MultiplyNode extends Node {
 // A node that returns a specific action to test branching from a sub-flow.
 class SignalNode extends Node {
     public function __construct(private string $signal = "default_signal") { parent::__construct(); }
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
         $shared->last_signal_emitted = $this->signal;
         return $this->signal;
     }
@@ -42,7 +42,7 @@ class SignalNode extends Node {
 // A node that stores which path was taken in the main flow.
 class PathNode extends Node {
     public function __construct(private string $path_id) { parent::__construct(); }
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
         $shared->path_taken = $this->path_id;
         return null;
     }
@@ -55,14 +55,14 @@ class FlowCompositionTest extends TestCase
      */
     public function testFlowAsNode()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->current = 0;
 
         $startNode = new NumberNode(5);
         $startNode->next(new AddNode(10))->next(new MultiplyNode(2));
         $innerFlow = new Flow($startNode);
         $outerFlow = new Flow($innerFlow);
-        
+
         $outerFlow->run($shared);
         $this->assertEquals(30, $shared->current);
     }
@@ -72,7 +72,7 @@ class FlowCompositionTest extends TestCase
      */
     public function testChainingTwoFlows()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->current = 0;
 
         // Flow 1: 10 + 10 = 20
@@ -86,7 +86,7 @@ class FlowCompositionTest extends TestCase
         // Chain the flows together.
         $flow1->next($flow2);
         $mainFlow = new Flow($flow1);
-        
+
         $mainFlow->run($shared);
         $this->assertEquals(40, $shared->current); // (10 + 10) * 2
     }
@@ -96,7 +96,7 @@ class FlowCompositionTest extends TestCase
      */
     public function testCompositionWithActionPropagation()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->current = 0;
 
         // 1. Inner flow that ends with a SignalNode returning "inner_done".

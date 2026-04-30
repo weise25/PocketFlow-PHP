@@ -7,8 +7,8 @@ use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
 use PocketFlow\AsyncNode;
 use PocketFlow\AsyncFlow;
+use PocketFlow\SharedStore;
 use React\Promise\PromiseInterface;
-use stdClass;
 use function React\Async\async;
 use function React\Async\await;
 use function React\Promise\Timer\sleep;
@@ -21,12 +21,12 @@ class AsyncFlowTest extends TestCase
     public function testAsyncFlowOrchestratesMixedNodes()
     {
         await(async(function() {
-            $shared = new stdClass();
+            $shared = new SharedStore();
             $shared->execution_order = [];
 
             // An asynchronous node that simulates fetching data.
             $asyncFetcher = new class extends AsyncNode {
-                public function post_async(stdClass $shared, mixed $p, mixed $e): PromiseInterface {
+                public function postAsync(SharedStore $shared, mixed $p, mixed $e): PromiseInterface {
                     return async(function() use ($shared) {
                         await(sleep(0.01));
                         $shared->execution_order[] = 'AsyncFetcher';
@@ -37,7 +37,7 @@ class AsyncFlowTest extends TestCase
             };
             // A regular synchronous node that processes the data.
             $syncProcessor = new class extends Node {
-                public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+                public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                     $shared->execution_order[] = 'SyncProcessor';
                     $shared->final_result = "Processed: " . $shared->async_data;
                     return null;
@@ -46,7 +46,7 @@ class AsyncFlowTest extends TestCase
 
             $asyncFetcher->next($syncProcessor);
             $flow = new AsyncFlow($asyncFetcher);
-            await($flow->run_async($shared));
+            await($flow->runAsync($shared));
 
             $this->assertEquals(['AsyncFetcher', 'SyncProcessor'], $shared->execution_order);
             $this->assertEquals("Processed: Async Data Fetched", $shared->final_result);
@@ -63,7 +63,7 @@ class AsyncFlowTest extends TestCase
             $this->expectExceptionMessage("Intentional async failure");
 
             $errorNode = new class extends AsyncNode {
-                public function exec_async(mixed $p): PromiseInterface {
+                public function execAsync(mixed $p): PromiseInterface {
                     return async(function() {
                         await(sleep(0.01));
                         throw new \RuntimeException("Intentional async failure");
@@ -72,7 +72,7 @@ class AsyncFlowTest extends TestCase
             };
 
             $flow = new AsyncFlow($errorNode);
-            await($flow->run_async(new stdClass()));
+            await($flow->runAsync(new SharedStore()));
         })());
     }
 }

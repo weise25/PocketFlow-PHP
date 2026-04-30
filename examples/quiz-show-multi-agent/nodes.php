@@ -1,8 +1,9 @@
 <?php
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/utils/openrouter_api.php';
+require_once __DIR__ . '/flow.php';
 
+use PocketFlow\SharedStore;
 use PocketFlow\AsyncNode;
 use React\Promise\PromiseInterface;
 use React\Promise\Deferred;
@@ -24,15 +25,15 @@ class MessageQueue {
  */
 class QuizmasterAgent extends AsyncNode
 {
-    public function prep_async(stdClass $shared): PromiseInterface {
+    public function prepAsync(SharedStore $shared): PromiseInterface {
         return $shared->quizmasterQueue->get();
     }
 
-    public function exec_async(mixed $message): PromiseInterface {
+    public function execAsync(mixed $message): PromiseInterface {
         return async(function() use ($message) {
             $model = $this->params['model'];
             $shared = $this->params['shared_state'];
-            $response = new stdClass();
+            $response = new SharedStore();
             $response->action = 'ERROR';
 
             if ($shared->game_over || !isset($message['type']) || $message['type'] === 'GAME_OVER') {
@@ -44,7 +45,7 @@ class QuizmasterAgent extends AsyncNode
                 case 'START_GAME':
                     $prompt = "You are a charismatic quiz show host. Welcome the two AI contestants, {$this->params['player1_model']} and {$this->params['player2_model']}, to your show. Keep it exciting and brief.";
                     echo "Quizmaster: ";
-                    await(call_openrouter_async($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
+                    await(callOpenrouterAsync($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
                     echo "\n";
                     $response->action = 'ASK_QUESTION';
                     break;
@@ -54,9 +55,9 @@ class QuizmasterAgent extends AsyncNode
                     echo "\n--- Round " . $shared->question_count . " (Score: P1 {$shared->player1_score} - P2 {$shared->player2_score}) ---\n";
                     $prompt = "You are a quizmaster. Ask one challenging but fun trivia question. Just the question, no intro.";
                     echo "Quizmaster: ";
-                    $question = await(call_openrouter_async($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
+                    $question = await(callOpenrouterAsync($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
                     echo "\n";
-                    
+
                     $shared->current_question = $question;
                     $response->action = 'BROADCAST_AND_COLLECT';
                     $response->question = $question;
@@ -74,16 +75,16 @@ class QuizmasterAgent extends AsyncNode
                       \"commentary\": \"Your entertaining and brief commentary on the answers.\",
                       \"round_winner\": \"[Player 1|Player 2|Neither]\"
                     }
-                    
+
                     Decision criteria: If both are correct, award the point to the one who was more concise or witty. If it's a true tie, choose 'Neither'.";
-                    
-                    $llmResponse = await(call_openrouter_async($model, [['role' => 'user', 'content' => $prompt]]));
-                    
+
+                    $llmResponse = await(callOpenrouterAsync($model, [['role' => 'user', 'content' => $prompt]]));
+
                     $jsonString = '';
                     if (preg_match('/\{.*?\}/s', $llmResponse, $matches)) {
                         $jsonString = $matches[0];
                     }
-                    
+
                     $evaluation = json_decode($jsonString, true);
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         echo "Quizmaster (confused): My evaluation card seems to be malfunctioning! We'll call it a draw.\n";
@@ -91,13 +92,13 @@ class QuizmasterAgent extends AsyncNode
                     }
 
                     echo "Quizmaster: " . ($evaluation['commentary'] ?? 'No commentary.') . "\n";
-                    
+
                     $winner = $evaluation['round_winner'] ?? 'Neither';
                     echo "JUDGEMENT: The point for this round goes to... {$winner}!\n";
 
                     if ($winner === 'Player 1') $shared->player1_score++;
                     if ($winner === 'Player 2') $shared->player2_score++;
-                    
+
                     echo "CURRENT SCORE: [Player 1: {$shared->player1_score}] | [Player 2: {$shared->player2_score}]\n";
 
                     if ($shared->player1_score >= $this->params['points_to_win'] || $shared->player2_score >= $this->params['points_to_win']) {
@@ -111,7 +112,7 @@ class QuizmasterAgent extends AsyncNode
         })();
     }
 
-    public function post_async(stdClass $shared, mixed $p, mixed $execResult): PromiseInterface {
+    public function postAsync(SharedStore $shared, mixed $p, mixed $execResult): PromiseInterface {
         return async(function() use ($shared, $execResult) {
             if (!is_object($execResult) || !isset($execResult->action)) return 'end_game';
 
@@ -121,7 +122,7 @@ class QuizmasterAgent extends AsyncNode
                     $p2_name = "Player 2 ({$this->params['player2_model']})";
                     $winner = $shared->player1_score > $shared->player2_score ? $p1_name : $p2_name;
                     if ($shared->player1_score === $shared->player2_score) $winner = "Both contestants in a stunning tie";
-                    
+
                     echo "\nQuizmaster: And we have a winner! With a final score of {$shared->player1_score} to {$shared->player2_score}, congratulations to {$winner}! That's all the time we have for today. Thanks for watching!\n";
                     $shared->game_over = true;
                     $shared->player1Queue->put(['type' => 'GAME_OVER']);
@@ -162,11 +163,11 @@ class QuizmasterAgent extends AsyncNode
  */
 class PlayerAgent extends AsyncNode
 {
-    public function prep_async(stdClass $shared): PromiseInterface {
+    public function prepAsync(SharedStore $shared): PromiseInterface {
         return $this->params['my_queue']->get();
     }
 
-    public function exec_async(mixed $message): PromiseInterface {
+    public function execAsync(mixed $message): PromiseInterface {
         return async(function() use ($message) {
             if ($message['type'] === 'GAME_OVER') return null;
 
@@ -176,17 +177,17 @@ class PlayerAgent extends AsyncNode
 
             echo "{$playerName} ({$model}): ";
             $prompt = "You are an AI contestant in a quiz show. Your personality is '{$personality}'. The quizmaster asked: '{$message['content']}'. Answer the question concisely, but let your personality shine through.";
-            
-            $answer = await(call_openrouter_async($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
+
+            $answer = await(callOpenrouterAsync($model, [['role' => 'user', 'content' => $prompt]], fn($chunk) => print($chunk)));
             echo "\n";
             return $answer;
         })();
     }
 
-    public function post_async(stdClass $shared, mixed $p, mixed $answer): PromiseInterface {
+    public function postAsync(SharedStore $shared, mixed $p, mixed $answer): PromiseInterface {
         return async(function() use ($shared, $answer) {
             if ($answer === null) return 'end_game';
-            
+
             $shared->quizmasterQueue->put(['type' => 'PLAYER_ANSWER', 'player' => $this->params['name'], 'answer' => $answer]);
             return 'continue';
         })();

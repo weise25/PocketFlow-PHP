@@ -5,7 +5,7 @@ namespace PocketFlow\Tests;
 
 use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
-use stdClass;
+use PocketFlow\SharedStore;
 use Throwable;
 
 class NodeTest extends TestCase
@@ -15,14 +15,14 @@ class NodeTest extends TestCase
      */
     public function testNodeExecutesSuccessfully()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->result = null;
 
         $node = new class extends Node {
             public function exec(mixed $prepResult): string {
                 return "success";
             }
-            public function post(stdClass $shared, mixed $prepResult, mixed $execResult): ?string {
+            public function post(SharedStore $shared, mixed $prepResult, mixed $execResult): ?string {
                 $shared->result = $execResult;
                 return null;
             }
@@ -37,7 +37,7 @@ class NodeTest extends TestCase
      */
     public function testNodeRetriesOnFailureAndSucceeds()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->result = null;
         $shared->attempts = 0;
 
@@ -52,10 +52,10 @@ class NodeTest extends TestCase
                 }
                 return "success on attempt 3";
             }
-            public function prep(stdClass $shared): stdClass {
+            public function prep(SharedStore $shared): SharedStore {
                 return $shared;
             }
-            public function post(stdClass $shared, mixed $prepResult, mixed $execResult): ?string {
+            public function post(SharedStore $shared, mixed $prepResult, mixed $execResult): ?string {
                 $shared->result = $execResult;
                 return null;
             }
@@ -71,7 +71,7 @@ class NodeTest extends TestCase
      */
     public function testNodeUsesFallbackAfterAllRetriesFail()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->result = null;
 
         $node = new class(maxRetries: 2) extends Node {
@@ -81,7 +81,7 @@ class NodeTest extends TestCase
             public function execFallback(mixed $prepResult, Throwable $e): mixed {
                 return "fallback result";
             }
-            public function post(stdClass $shared, mixed $prepResult, mixed $execResult): ?string {
+            public function post(SharedStore $shared, mixed $prepResult, mixed $execResult): ?string {
                 $shared->result = $execResult;
                 return null;
             }
@@ -108,6 +108,34 @@ class NodeTest extends TestCase
             }
         };
 
-        $node->run(new stdClass());
+        $node->run(new SharedStore());
+    }
+
+    /**
+     * Tests that attempting to overwrite a successor throws a LogicException.
+     */
+    public function testOverwriteSuccessorThrowsException(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("overwrite existing successor");
+
+        $node = new class extends Node {};
+        $target1 = new class extends Node {};
+        $target2 = new class extends Node {};
+        $node->next($target1, 'test_action');
+        $node->next($target2, 'test_action'); // should throw
+    }
+
+    /**
+     * Tests that calling run() on a node with successors throws a RuntimeException.
+     */
+    public function testRunWithSuccessorsThrowsException(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Cannot run a node that has successors directly");
+
+        $node = new class extends Node {};
+        $node->next(new class extends Node {});
+        $node->run(new SharedStore());
     }
 }

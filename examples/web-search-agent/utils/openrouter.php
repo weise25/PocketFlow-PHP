@@ -6,7 +6,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-function call_llm(string $prompt, string $model = "deepseek/deepseek-chat-v3-0324:free"): string
+function callLlm(string $prompt, string $model = "deepseek/deepseek-v4-flash"): string
 {
     global $shared; // Access the global shared state
     $apiKey = $shared->env['OPENROUTER_API_KEY'] ?? null;

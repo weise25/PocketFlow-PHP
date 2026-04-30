@@ -12,7 +12,7 @@ use function React\Async\async;
  * @param ?callable $streamCallback An optional callback that is called for each stream chunk.
  * @return PromiseInterface A promise that resolves to the full response of the LLM.
  */
-function call_openrouter_async(string $model, array $messages, ?callable $streamCallback = null): PromiseInterface
+function callOpenrouterAsync(string $model, array $messages, ?callable $streamCallback = null): PromiseInterface
 {
     return async(function () use ($model, $messages, $streamCallback) {
         try {

@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/utils/openrouter.php';
-require_once __DIR__ . '/utils/brave_search.php';
+require_once __DIR__ . '/flow.php';
 
+use PocketFlow\SharedStore;
 use PocketFlow\Node;
 use PocketFlow\BatchNode;
 use Symfony\Component\Yaml\Yaml;
@@ -15,7 +15,7 @@ class DecideActionNode extends Node
     public function exec(mixed $prepResult): array
     {
         $history = empty($prepResult['search_history']) ? "No research has been done yet." : implode("\n", $prepResult['search_history']);
-        $pending_searches = empty($prepResult['search_plan']) ? "No searches are planned." : implode("\n", $prepResult['search_plan']);
+        $pendingSearches = empty($prepResult['search_plan']) ? "No searches are planned." : implode("\n", $prepResult['search_plan']);
 
         $prompt = <<<PROMPT
         You are a research agent. Your task is to answer the user's query by reasoning about the available information and choosing the correct tool.
@@ -24,7 +24,7 @@ class DecideActionNode extends Node
         Here is the current state of your work:
         -   User Query: "{$prepResult['query']}"
         -   Search History: {$history}
-        -   Pending Search Plan: {$pending_searches}
+        -   Pending Search Plan: {$pendingSearches}
 
         **Thought:**
         Based on the Observation, you must now decide on the next action. Follow these steps:
@@ -47,7 +47,7 @@ class DecideActionNode extends Node
         ```
         PROMPT;
 
-        $response = call_llm($prompt);
+        $response = callLlm($prompt);
         if (str_starts_with($response, 'Error:')) {
             return ['action' => 'error', 'message' => $response];
         }
@@ -66,7 +66,7 @@ class DecideActionNode extends Node
         }
     }
 
-    public function prep(stdClass $shared): array
+    public function prep(SharedStore $shared): array
     {
         return [
             'query' => $shared->query,
@@ -75,7 +75,7 @@ class DecideActionNode extends Node
         ];
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $decision): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $decision): ?string
     {
         if (empty($decision['action'])) {
             $shared->error_message = 'The agent failed to decide on a valid action.';
@@ -85,7 +85,7 @@ class DecideActionNode extends Node
         if ($decision['action'] === 'error') {
             $shared->error_message = $decision['message'] ?? 'An unknown error occurred in the decision node.';
         }
-        
+
         echo "Decision: {$decision['action']}\n";
         return $decision['action'];
     }
@@ -97,7 +97,7 @@ class PlanSearchesNode extends Node
     {
         $prompt = <<<PROMPT
         You are a strategic research planner. Your task is to create a list of specific, targeted search queries that will effectively answer the user's main query.
-        
+
         **Main Query:** "{$query}"
 
         **Instructions:**
@@ -115,7 +115,7 @@ class PlanSearchesNode extends Node
         ```
         PROMPT;
 
-        $response = call_llm($prompt);
+        $response = callLlm($prompt);
         preg_match('/```yaml\s*(.*?)\s*```/s', $response, $matches);
         $yamlString = $matches[1] ?? '';
 
@@ -133,14 +133,14 @@ class PlanSearchesNode extends Node
         return $searchQueries;
     }
 
-    public function prep(stdClass $shared): mixed
+    public function prep(SharedStore $shared): mixed
     {
         return $shared->query;
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $search_plan): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $searchPlan): ?string
     {
-        $shared->search_plan = $search_plan;
+        $shared->search_plan = $searchPlan;
         echo "Search plan created.\n";
         return 'continue';
     }
@@ -148,7 +148,7 @@ class PlanSearchesNode extends Node
 
 class ExecuteAllSearchesNode extends BatchNode
 {
-    public function prep(stdClass $shared): array
+    public function prep(SharedStore $shared): array
     {
         return $shared->search_plan;
     }
@@ -157,10 +157,10 @@ class ExecuteAllSearchesNode extends BatchNode
     {
         usleep(500000); // Proactive 0.5-second delay to avoid rate limits
         echo "Searching for: {$search_term}\n";
-        return call_brave_search($search_term);
+        return callBraveSearch($search_term);
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $searchResultList): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $searchResultList): ?string
     {
         $shared->search_history = $searchResultList;
         $shared->search_plan = []; // Clear the plan
@@ -198,10 +198,10 @@ class SynthesizeReportNode extends Node
         Generate the final report now.
         PROMPT;
 
-        return call_llm($prompt);
+        return callLlm($prompt);
     }
 
-    public function prep(stdClass $shared): mixed
+    public function prep(SharedStore $shared): mixed
     {
         return [
             'query' => $shared->query,
@@ -209,7 +209,7 @@ class SynthesizeReportNode extends Node
         ];
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $report): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $report): ?string
     {
         $shared->final_report = $report;
         echo "Report synthesized.\n";
@@ -222,15 +222,15 @@ class AnswerSimpleNode extends Node
     public function exec(mixed $query): string
     {
         $prompt = "Answer the following question directly: {$query}";
-        return call_llm($prompt);
+        return callLlm($prompt);
     }
 
-    public function prep(stdClass $shared): mixed
+    public function prep(SharedStore $shared): mixed
     {
         return $shared->query;
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $answer): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $answer): ?string
     {
         $shared->final_answer = $answer;
         echo "Simple answer provided.\n";
@@ -245,7 +245,7 @@ class ErrorNode extends Node
         return null;
     }
 
-    public function post(stdClass $shared, mixed $p, mixed $e): ?string
+    public function post(SharedStore $shared, mixed $p, mixed $e): ?string
     {
         echo "\n--- An Error Occurred ---\n";
         echo $shared->error_message . "\n";

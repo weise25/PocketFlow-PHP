@@ -6,8 +6,8 @@ namespace PocketFlow\Tests;
 use PHPUnit\Framework\TestCase;
 use PocketFlow\AsyncBatchNode;
 use PocketFlow\AsyncParallelBatchNode;
+use PocketFlow\SharedStore;
 use React\Promise\PromiseInterface;
-use stdClass;
 use function React\Async\async;
 use function React\Async\await;
 use function React\Promise\Timer\sleep;
@@ -20,20 +20,20 @@ class AsyncBatchNodeTest extends TestCase
     public function testAsyncBatchNodeProcessesItemsSequentially()
     {
         await(async(function() {
-            $shared = new stdClass();
+            $shared = new SharedStore();
             $shared->items = [1, 2, 3];
 
             $node = new class extends AsyncBatchNode {
-                public function prep_async(stdClass $shared): PromiseInterface {
+                public function prepAsync(SharedStore $shared): PromiseInterface {
                     return async(fn() => $shared->items)();
                 }
-                public function exec_async(mixed $item): PromiseInterface {
+                public function execAsync(mixed $item): PromiseInterface {
                     return async(function() use ($item) {
                         await(sleep(0.01));
                         return $item * 2;
                     })();
                 }
-                public function post_async(stdClass $shared, mixed $p, mixed $execResult): PromiseInterface {
+                public function postAsync(SharedStore $shared, mixed $p, mixed $execResult): PromiseInterface {
                     return async(function() use ($shared, $execResult) {
                         $shared->results = $execResult;
                         return null;
@@ -42,7 +42,7 @@ class AsyncBatchNodeTest extends TestCase
             };
 
             $start_time = microtime(true);
-            await($node->run_async($shared));
+            await($node->runAsync($shared));
             $total_time = microtime(true) - $start_time;
 
             $this->assertEquals([2, 4, 6], $shared->results);
@@ -57,20 +57,20 @@ class AsyncBatchNodeTest extends TestCase
     public function testAsyncParallelBatchNodeProcessesItemsConcurrently()
     {
         await(async(function() {
-            $shared = new stdClass();
+            $shared = new SharedStore();
             $shared->items = [1, 2, 3];
 
             $node = new class extends AsyncParallelBatchNode {
-                public function prep_async(stdClass $shared): PromiseInterface {
+                public function prepAsync(SharedStore $shared): PromiseInterface {
                     return async(fn() => $shared->items)();
                 }
-                public function exec_async(mixed $item): PromiseInterface {
+                public function execAsync(mixed $item): PromiseInterface {
                     return async(function() use ($item) {
                         await(sleep(0.02));
                         return $item * 2;
                     })();
                 }
-                public function post_async(stdClass $shared, mixed $p, mixed $execResult): PromiseInterface {
+                public function postAsync(SharedStore $shared, mixed $p, mixed $execResult): PromiseInterface {
                     return async(function() use ($shared, $execResult) {
                         $shared->results = $execResult;
                         return null;
@@ -79,7 +79,7 @@ class AsyncBatchNodeTest extends TestCase
             };
 
             $start_time = microtime(true);
-            await($node->run_async($shared));
+            await($node->runAsync($shared));
             $total_time = microtime(true) - $start_time;
 
             sort($shared->results);
@@ -98,14 +98,14 @@ class AsyncBatchNodeTest extends TestCase
             $this->expectException(\ValueError::class);
             $this->expectExceptionMessage("Error on item 2");
 
-            $shared = new stdClass();
+            $shared = new SharedStore();
             $shared->items = [1, 2, 3];
 
             $errorNode = new class extends AsyncParallelBatchNode {
-                public function prep_async(stdClass $shared): PromiseInterface {
+                public function prepAsync(SharedStore $shared): PromiseInterface {
                     return async(fn() => $shared->items)();
                 }
-                public function exec_async(mixed $item): PromiseInterface {
+                public function execAsync(mixed $item): PromiseInterface {
                     return async(function() use ($item) {
                         if ($item === 2) {
                             throw new \ValueError("Error on item 2");
@@ -116,7 +116,7 @@ class AsyncBatchNodeTest extends TestCase
                 }
             };
 
-            await($errorNode->run_async($shared));
+            await($errorNode->runAsync($shared));
         })());
     }
 }

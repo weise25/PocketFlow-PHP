@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
 use PocketFlow\BatchNode;
 use PocketFlow\Flow;
-use stdClass;
+use PocketFlow\SharedStore;
 
 // --- Helper nodes for the Map-Reduce test pattern ---
 
@@ -16,13 +16,13 @@ use stdClass;
  */
 class ArrayChunkSumNode extends BatchNode {
     public function __construct(private int $chunkSize = 10) { parent::__construct(); }
-    public function prep(stdClass $shared): array {
+    public function prep(SharedStore $shared): array {
         return array_chunk($shared->input_array ?? [], $this->chunkSize);
     }
     public function exec(mixed $chunk): int {
         return array_sum($chunk);
     }
-    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $execResult): ?string {
         $shared->chunk_sums = $execResult;
         return 'default';
     }
@@ -32,13 +32,13 @@ class ArrayChunkSumNode extends BatchNode {
  * REDUCE Phase: Aggregates the chunk sums into a final total.
  */
 class SumReduceNode extends Node {
-    public function prep(stdClass $shared): array {
+    public function prep(SharedStore $shared): array {
         return $shared->chunk_sums ?? [];
     }
     public function exec(mixed $chunkSums): int {
         return array_sum($chunkSums);
     }
-    public function post(stdClass $shared, mixed $p, mixed $execResult): ?string {
+    public function post(SharedStore $shared, mixed $p, mixed $execResult): ?string {
         $shared->total_sum = $execResult;
         return null;
     }
@@ -46,9 +46,9 @@ class SumReduceNode extends Node {
 
 class BatchNodeTest extends TestCase
 {
-    private function runMapReducePipeline(array $inputArray, int $chunkSize): stdClass
+    private function runMapReducePipeline(array $inputArray, int $chunkSize): SharedStore
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->input_array = $inputArray;
 
         $mapNode = new ArrayChunkSumNode($chunkSize);

@@ -6,7 +6,7 @@ namespace PocketFlow\Tests;
 use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
 use PocketFlow\Flow;
-use stdClass;
+use PocketFlow\SharedStore;
 
 class FlowTest extends TestCase
 {
@@ -15,17 +15,17 @@ class FlowTest extends TestCase
      */
     public function testLinearFlowExecutesInOrder()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->execution_order = [];
 
         $nodeA = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'A';
                 return 'default';
             }
         };
         $nodeB = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'B';
                 return null;
             }
@@ -43,23 +43,23 @@ class FlowTest extends TestCase
      */
     public function testBranchingFlowSelectsCorrectPath()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->execution_order = [];
 
         $decideNode = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'decide';
                 return 'path_b'; // Explicitly choose path B
             }
         };
         $nodeA = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'A';
                 return null;
             }
         };
         $nodeB = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'B';
                 return null;
             }
@@ -80,17 +80,17 @@ class FlowTest extends TestCase
      */
     public function testFlowEndsWhenActionHasNoSuccessor()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->execution_order = [];
 
         $nodeA = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'A';
                 return 'unknown_action'; // This action has no successor
             }
         };
         $nodeB = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->execution_order[] = 'B';
                 return null;
             }
@@ -98,9 +98,8 @@ class FlowTest extends TestCase
 
         $nodeA->next($nodeB); // Only for 'default' action
         $flow = new Flow($nodeA);
-        
-        // Suppress the expected E_USER_WARNING from trigger_error.
-        @$flow->run($shared);
+
+        $flow->run($shared);
 
         // The flow should stop after Node A.
         $this->assertEquals(['A'], $shared->execution_order);
@@ -111,22 +110,22 @@ class FlowTest extends TestCase
      */
     public function testCyclicFlowExecutesUntilConditionIsMet()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->current_value = 10;
 
         $checkNode = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 return $shared->current_value > 0 ? 'is_positive' : 'is_negative_or_zero';
             }
         };
         $subtractNode = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->current_value -= 3;
                 return null;
             }
         };
         $endNode = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $shared->final_signal = "cycle_done";
                 return null;
             }

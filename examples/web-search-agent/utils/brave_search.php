@@ -7,7 +7,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\ClientException;
 
-function call_brave_search(string $query): string
+function callBraveSearch(string $query): string
 {
     global $shared;
     $apiKey = $shared->env['BRAVE_API_KEY'] ?? null;

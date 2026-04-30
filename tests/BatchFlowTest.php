@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use PocketFlow\Node;
 use PocketFlow\Flow;
 use PocketFlow\BatchFlow;
-use stdClass;
+use PocketFlow\SharedStore;
 use ValueError;
 
 class BatchFlowTest extends TestCase
@@ -17,12 +17,12 @@ class BatchFlowTest extends TestCase
      */
     public function testBatchFlowProcessesAllParameterSets()
     {
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->input_data = ['a' => 1, 'b' => 2, 'c' => 3];
         $shared->results = [];
 
         $processItemNode = new class extends Node {
-            public function post(stdClass $shared, mixed $p, mixed $e): ?string {
+            public function post(SharedStore $shared, mixed $p, mixed $e): ?string {
                 $key = $this->params['key'];
                 $shared->results[$key] = $shared->input_data[$key] * 2;
                 return null;
@@ -31,7 +31,7 @@ class BatchFlowTest extends TestCase
 
         $subFlow = new Flow($processItemNode);
         $batchFlow = new class($subFlow) extends BatchFlow {
-            public function prep(stdClass $shared): array {
+            public function prep(SharedStore $shared): array {
                 return array_map(fn($k) => ['key' => $k], array_keys($shared->input_data));
             }
         };
@@ -48,7 +48,7 @@ class BatchFlowTest extends TestCase
         $this->expectException(ValueError::class);
         $this->expectExceptionMessage("Error processing key: error_key");
 
-        $shared = new stdClass();
+        $shared = new SharedStore();
         $shared->input_data = ['ok_key' => 1, 'error_key' => 2];
 
         $errorNode = new class extends Node {
@@ -62,7 +62,7 @@ class BatchFlowTest extends TestCase
 
         $subFlow = new Flow($errorNode);
         $batchFlow = new class($subFlow) extends BatchFlow {
-            public function prep(stdClass $shared): array {
+            public function prep(SharedStore $shared): array {
                 return array_map(fn($k) => ['key' => $k], array_keys($shared->input_data));
             }
         };

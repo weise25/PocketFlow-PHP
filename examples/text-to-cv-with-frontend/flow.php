@@ -4,7 +4,7 @@ require_once __DIR__ . '/nodes.php';
 
 use PocketFlow\Flow;
 
-function create_cv_crafter_flow(): Flow {
+function createCvCrafterFlow(): Flow {
     // 1. Create all the nodes
     $getInitialPrompt = new GetInitialPromptNode();
     $createPlan = new CreatePlanNode(maxRetries: 3, wait: 5);
