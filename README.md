@@ -1,4 +1,5 @@
 
+
 # PocketFlow-PHP
 
 <p  align="center">
@@ -9,24 +10,21 @@
 
 <p  align="center">
 
-<strong>A minimalist LLM framework for PHP, inspired by the 100-line Python original.</strong>
+<strong><p align="center">A minimalist LLM framework for PHP, inspired by the 100-line Python original.</strong>
 
 <br>
 
-Build complex Agents, Workflows, RAG systems and more, with a tiny, powerful core.
+<p align="center">Build complex Agents, Workflows, RAG systems and more, with a tiny, powerful core.</p>
 
 </p>
 
   
 
-<p  align="center">
 
-<a  href="https://github.com/weise25/PocketFlow-PHP/blob/main/LICENSE"><img  src="https://img.shields.io/badge/License-MIT-yellow.svg"  alt="License: MIT"></a>
-
-<a  href="#"><img  src="https://img.shields.io/badge/PHP-8.3%2B-blue.svg"  alt="PHP 8.3+"></a>
-
-<a  href="https://packagist.org/packages/react/async"><img  src="https://img.shields.io/badge/Async-ReactPHP-blueviolet"  alt="Async with ReactPHP"></a>
-
+<p align="center">
+  <a href="https://github.com/weise25/PocketFlow-PHP/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="#"><img src="https://img.shields.io/badge/PHP-8.3%2B-blue.svg" alt="PHP 8.3+"></a>
+  <a href="https://packagist.org/packages/react/async"><img src="https://img.shields.io/badge/Async-ReactPHP-blueviolet" alt="Async with ReactPHP"></a>
 </p>
 
   
@@ -76,16 +74,12 @@ Build your own app in 60 seconds using the template:
   
 
 ```bash
+git clone https://github.com/weise25/pocketflow-php-template.git my-app
 
-git  clone  https://github.com/weise25/pocketflow-php-template.git  my-app
+cd my-app
 
-cd  my-app
-
-composer  install
-
+composer install
 ```
-
-  
 
 Open in any AI coding tool that supports the [Agent Skills](https://agentskills.io) standard — **Cline**, **Cursor**, **Windsurf**, **Claude Code**, **OpenCode**, and others. The built-in skill automatically teaches your agent the framework.
 
@@ -108,12 +102,8 @@ The agent will write `nodes.php`, `flow.php`, `main.php`, and `utils/` — follo
   
 
 ```bash
-
-composer  require  weise25/pocketflow-php
-
+composer require weise25/pocketflow-php
 ```
-
-  
 
 ```php
 
@@ -134,18 +124,12 @@ use  PocketFlow\SharedStore;
 | Example | Pattern | Description |
 |---|---|---|
 | [Web Search Agent](examples/web-search-agent) | Agent | Multi-step research with Brave Search + OpenRouter |
-| [Quiz Show](examples/quiz-show-multi-agent) | Multi-Agent | Three AI agents — a host and two contestants — play a quiz game |
-| [Text-to-CV](examples/text-to-cv-with-frontend) | Workflow + RAG | Generate a CV plan, iterate with edits, output PDF |
-
+| [Multi Agent Quiz Show](examples/quiz-show-multi-agent) | Multi-Agent | Three AI agents — a host and two contestants — play a quiz game |
+| [Simple Text-to-CV](examples/text-to-cv-with-frontend) | Workflow + Frontend | Generate a CV plan, iterate with edits, output PDF |
   
-
 ## Upgrading from 0.1.x
 
-  
-
 Version 0.2.0 introduced these breaking changes:
-
-  
 
 1.  **Replace `stdClass` with `SharedStore`**: All `run()`, `prep()`, `post()` etc. now expect `PocketFlow\SharedStore` instead of `stdClass`. Change `new stdClass()` to `new SharedStore()` and update type hints.
 
