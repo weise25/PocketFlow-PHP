@@ -3,18 +3,9 @@
     "description": "Web Search Agent example for PocketFlow-PHP",
     "type": "project",
     "license": "MIT",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../../",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "require": {
         "php": ">=8.3",
-        "weise25/pocketflow-php": "@dev",
+        "weise25/pocketflow-php": "^0.2",
         "guzzlehttp/guzzle": "^7.9",
         "vlucas/phpdotenv": "^5.6",
         "symfony/yaml": "^7.3"
