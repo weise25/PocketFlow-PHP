@@ -126,6 +126,7 @@ use  PocketFlow\SharedStore;
 | [Web Search Agent](examples/web-search-agent) | Agent | Multi-step research with Brave Search + OpenRouter |
 | [Multi Agent Quiz Show](examples/quiz-show-multi-agent) | Multi-Agent | Three AI agents — a host and two contestants — play a quiz game |
 | [Simple Text-to-CV](examples/text-to-cv-with-frontend) | Workflow + Frontend | Generate a CV plan, iterate with edits, output PDF |
+| [Text2SQL REPL](examples/text2sql) | Workflow / Agent | Populate a DB, chat with your Database in natural language |
   
 ## Upgrading from 0.1.x
 
