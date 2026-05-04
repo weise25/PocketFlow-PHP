@@ -31,11 +31,7 @@
 
 ---
 
-  
-
 **PocketFlow-PHP** is a port of the amazing 100-line Python framework [PocketFlow](https://github.com/The-Pocket/PocketFlow) from [Zachary](https://github.com/zachary62/), bringing its core principles to the PHP ecosystem. It's built for **Agentic Coding** — you design the system, an AI agent writes the code.
-
-  
 
 -  **Lightweight**: ~700 lines of clean PHP across 14 PSR-4 files.
 
@@ -47,11 +43,8 @@
 
 ## How does it work?
 
-  
 
 The core abstraction is a **Graph + Shared Store**:
-
-  
 
 1.  **Node**: Smallest unit of work — `prep()` → `exec()` → `post()`, with built-in retry/fallback.
 
@@ -59,20 +52,14 @@ The core abstraction is a **Graph + Shared Store**:
 
 3.  **Shared Store**: A `SharedStore` object passed through the entire flow for inter-node communication.
 
-  
 
 From these three primitives you build every design pattern: Agent, Workflow, RAG, Map-Reduce, Multi-Agent, and more.
 
-  
 
 ## Quick Start
 
+Build your own app in 60 seconds using the [Template](https://github.com/weise25/pocketflow-php-template):
   
-
-Build your own app in 60 seconds using the template:
-
-  
-
 ```bash
 git clone https://github.com/weise25/pocketflow-php-template.git my-app
 
@@ -82,24 +69,14 @@ composer install
 ```
 
 Open in any AI coding tool that supports the [Agent Skills](https://agentskills.io) standard — **Cline**, **Cursor**, **Windsurf**, **Claude Code**, **OpenCode**, and others. The built-in skill automatically teaches your agent the framework.
-
   
-
 Then just describe what you want to build:
 
-  
-
 >  *"Build me a research agent that searches the web and synthesizes a report."*
-
   
-
 The agent will write `nodes.php`, `flow.php`, `main.php`, and `utils/` — following the 8-step Agentic Coding process.
-
   
-
-## Installing in an Existing Project
-
-  
+## Installing in an Existing Project  
 
 ```bash
 composer require weise25/pocketflow-php
@@ -116,8 +93,6 @@ use  PocketFlow\SharedStore;
 // etc.
 
 ```
-
-  
 
 ## Examples
 
@@ -142,19 +117,12 @@ Version 0.2.0 introduced these breaking changes:
 
 5.  **PSR-4 structure**: Classes are now one-per-file instead of a single `PocketFlow.php`.
 
-  
-
 ## Why This Approach?
-
-  
 
 PocketFlow-PHP doesn't try to be a massive framework with every feature built in. It provides the graph abstraction, the retry mechanism, and the async backbone — then gets out of your way. Utility functions (LLM calls, web search, embedding) are yours to write or swap. This keeps the core tiny, portable, and vendor-agnostic.
 
-  
-
 Paired with an AI coding agent, the framework's strict structure eliminates common LLM errors and lets the agent focus on translating your intent into code — at dramatic speed.
 
-  
 
 <p  align="center">
 
